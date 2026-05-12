@@ -1,0 +1,45 @@
+{
+  "name": "rusticastudio",
+  "version": "1.0.1",
+  "description": "Rustica Studio",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+  "appId": "com.rustica.studio",
+  "productName": "RusticaStudio",
+
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "letskoo",
+      "repo": "rusticastudio"
+    }
+  ],
+
+  "win": {
+    "target": "nsis",
+    "icon": "assets/icon.ico"
+  },
+
+  "directories": {
+    "output": "dist"
+  }
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.3",
+    "node-webcam": "^0.8.2"
+  },
+  "devDependencies": {
+    "electron": "^42.0.1",
+    "electron-builder": "^26.8.1"
+  }
+}

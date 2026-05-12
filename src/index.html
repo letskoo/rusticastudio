@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Rustica Studio</title>
+
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+
+    <!-- 시작 페이지 -->
+    <div id="start-page" class="page active">
+
+        <img src="../assets/ui/page1.png" class="background" />
+
+        <button id="start-btn"></button>
+
+        <button id="admin-hidden-btn"></button>
+
+    </div>
+
+    <!-- 광고 페이지 -->
+    <div id="ad-page" class="page">
+
+        <img src="../assets/ui/page2.png" class="background" />
+
+        <div class="loader"></div>
+
+    </div>
+
+    <!-- 촬영 페이지 -->
+    <div id="camera-page" class="page">
+
+        <div id="camera-wrapper">
+
+            <video id="camera" autoplay playsinline></video>
+
+            <img src="../assets/ui/page3.png" class="overlay" />
+
+            <div id="session-timer">
+                20:00 / 10
+            </div>
+
+            <div id="camera-reconnect-message">
+                카메라 재연결 중...
+            </div>
+
+            <img id="last-photo-preview" />
+
+        </div>
+
+    </div>
+
+    <!-- 관리자 모드 -->
+    <div id="admin-modal">
+
+        <div id="admin-panel">
+
+            <h1>설정</h1>
+
+            <div class="admin-item">
+
+                <span>세션 시간 (분)</span>
+
+                <input id="session-min-input" type="number" min="1" value="20" />
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>촬영 간격 (초)</span>
+
+                <input id="capture-sec-input" type="number" min="1" value="10" />
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>자동 삭제 시간 (분)</span>
+
+                <input id="delete-min-input" type="number" min="1" value="60" />
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>카메라 선택</span>
+
+                <select id="camera-select"></select>
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>저장 위치</span>
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    align-items:center;
+                ">
+
+                    <div id="current-save-path">
+                        C:\Users\User\Downloads
+                    </div>
+
+                    <button id="select-path-btn">
+                        찾아보기
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="admin-item auto-launch-item">
+
+                <div>
+
+                    <div class="auto-launch-title">
+                        윈도우 자동 실행
+                    </div>
+
+                    <div class="auto-launch-desc">
+                        Windows 시작 시 프로그램을 자동으로 실행합니다.
+                    </div>
+
+                </div>
+
+                <label class="toggle-switch">
+
+                    <input id="auto-launch-input" type="checkbox" />
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+            <div class="admin-button-row">
+
+                <button id="save-admin-btn">
+                    저장
+                </button>
+
+                <button id="close-admin-btn">
+                    닫기
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="./renderer.js"></script>
+
+</body>
+
+</html>
