@@ -30,7 +30,6 @@ body {
     height: 100vh;
     width: auto;
     object-fit: contain;
-
     pointer-events: none;
 }
 
@@ -60,7 +59,7 @@ body {
     transform: translate(-50%, -50%);
     width: 70px;
     height: 70px;
-    border: 8px solid rgba(255, 255, 255, 0.4);
+    border: 8px solid rgba(255,255,255,0.4);
     border-top: 8px solid #ffffff;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -73,31 +72,66 @@ body {
     }
 }
 
+/*
+    핵심 crop 컨테이너
+*/
 #camera-wrapper {
     position: relative;
+
+    width: 100vw;
     height: 100vh;
-    aspect-ratio: 9 / 16;
+
     overflow: hidden;
+
+    background: #000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/*
+    실제 크기는 renderer.js 에서 계산
+*/
+#camera {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: auto;
+    height: auto;
+
+    object-fit: cover;
+
+    transform:
+        translate(-50%, -50%)
+        scaleX(-1);
+
     background: black;
 }
 
-#camera {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-
-    transform: scaleX(-1);
-}
-
+/*
+    세로 프레임 오버레이
+*/
 .overlay {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+
+    top: 50%;
+    left: 50%;
+
+    height: 100vh;
+    width: auto;
+
+    aspect-ratio: 9 / 16;
+
+    transform:
+        translate(-50%, -50%);
+
+    object-fit: contain;
+
     pointer-events: none;
+
     z-index: 10;
 }
 
@@ -105,7 +139,9 @@ body {
     position: absolute;
 
     top: 3.2%;
-    right: 6%;
+    right: 50%;
+
+    transform: translateX(210px);
 
     color: white;
 
@@ -118,25 +154,7 @@ body {
     z-index: 20;
 
     text-shadow:
-        0 0 10px rgba(0, 0, 0, 0.7);
-}
-
-#capture-timer {
-    display: none;
-
-    top: 3.2%;
-    right: 0%;
-
-    color: white;
-
-    font-size: 30px;
-
-    font-weight: 700;
-
-    z-index: 20;
-
-    text-shadow:
-        0 0 10px rgba(0, 0, 0, 0.7);
+        0 0 10px rgba(0,0,0,0.7);
 }
 
 .flash {
@@ -144,6 +162,7 @@ body {
 }
 
 @keyframes flashEffect {
+
     0% {
         filter: brightness(1);
     }
@@ -159,15 +178,21 @@ body {
 
 #last-photo-preview {
     position: absolute;
-    bottom: 30px;
-    right: 30px;
 
-    width: 140px;
-    height: 200px;
+    bottom: 24px;
+    right: 50%;
+
+    transform:
+        translateX(260px);
+
+    width: 120px;
+    height: 213px;
 
     object-fit: cover;
 
-    border: none;
+    overflow: hidden;
+
+    background: black;
 
     border-radius: 16px;
 
@@ -175,46 +200,25 @@ body {
 
     opacity: 0;
 
-    transform: translateY(20px);
-
     transition:
         opacity 0.3s,
         transform 0.3s;
-
-    box-shadow: none;
 
     pointer-events: none;
 }
 
 #last-photo-preview.show {
+
     opacity: 1;
 
-    transform: translateY(0);
+    transform:
+        translateX(260px)
+        translateY(0);
 
     border: 4px solid white;
 
     box-shadow:
-        0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-#last-photo-preview.show {
-    opacity: 1;
-
-    transform: translateY(0);
-}
-
-@media (max-aspect-ratio: 9/16) {
-
-    .background {
-        width: 100vw;
-        height: auto;
-    }
-
-    #camera-wrapper {
-        width: 100vw;
-        height: auto;
-        aspect-ratio: 9 / 16;
-    }
+        0 0 20px rgba(0,0,0,0.5);
 }
 
 #admin-hidden-btn {
@@ -246,7 +250,7 @@ body {
     position: fixed;
     inset: 0;
 
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0,0,0,0.7);
 
     display: none;
 
@@ -426,7 +430,7 @@ body {
     transition: 0.25s;
 
     box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.2);
+        0 2px 8px rgba(0,0,0,0.2);
 }
 
 .slider::after {
@@ -446,15 +450,15 @@ body {
     color: #666;
 }
 
-.toggle-switch input:checked+.slider {
+.toggle-switch input:checked + .slider {
     background: #2563eb;
 }
 
-.toggle-switch input:checked+.slider::before {
+.toggle-switch input:checked + .slider::before {
     transform: translateX(44px);
 }
 
-.toggle-switch input:checked+.slider::after {
+.toggle-switch input:checked + .slider::after {
     content: "ON";
 
     right: auto;
@@ -495,7 +499,6 @@ body {
 
 #save-admin-btn {
     background: #2563eb;
-
     color: white;
 }
 

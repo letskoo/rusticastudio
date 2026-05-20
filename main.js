@@ -24,12 +24,15 @@ let currentSessionFolder = null;
 
 let dslrWatcher = null;
 
+let processedDSLRFiles =
+    new Set();
+
 let appSettings = {
     sessionMinutes: 20,
     captureSeconds: 10,
     deleteMinutes: 60,
     selectedCameraId: "",
-    autoLaunch:false,
+    autoLaunch: false,
 
     savePath: path.join(
         os.homedir(),
@@ -47,43 +50,40 @@ const LOG_FOLDER = path.join(
     "logs"
 );
 
-function ensureLogFolder(){
+function ensureLogFolder() {
 
-    if(!fs.existsSync(LOG_FOLDER)){
+    if (!fs.existsSync(LOG_FOLDER)) {
 
         fs.mkdirSync(
             LOG_FOLDER,
-            { recursive:true }
+            { recursive: true }
         );
     }
 }
 
-function writeLog(message){
+function writeLog(message) {
 
-    try{
+    try {
 
         ensureLogFolder();
 
         const now = new Date();
 
         const date =
-            `${now.getFullYear()}-${
-                String(
-                    now.getMonth() + 1
-                ).padStart(2, "0")
-            }-${
-                String(
-                    now.getDate()
-                ).padStart(2, "0")
+            `${now.getFullYear()}-${String(
+                now.getMonth() + 1
+            ).padStart(2, "0")
+            }-${String(
+                now.getDate()
+            ).padStart(2, "0")
             }`;
 
         const time =
             `${String(
                 now.getHours()
-            ).padStart(2, "0")}:${
-                String(
-                    now.getMinutes()
-                ).padStart(2, "0")
+            ).padStart(2, "0")}:${String(
+                now.getMinutes()
+            ).padStart(2, "0")
             }:${String(
                 now.getSeconds()
             ).padStart(2, "0")
@@ -100,7 +100,7 @@ function writeLog(message){
             `[${time}] ${message}\n`
         );
 
-    }catch(error){
+    } catch (error) {
 
         console.error(
             "로그 기록 실패:",
@@ -120,11 +120,13 @@ function getSavePath() {
     );
 }
 
-const DSLR_WATCH_FOLDER = path.join(
-    os.homedir(),
-    "Pictures",
-    "DSLR_IMPORT"
-);
+const DSLR_WATCH_FOLDER =
+    path.join(
+        os.homedir(),
+        "Pictures",
+        "digiCamControl",
+        "Session1"
+    );
 
 const SESSION_FOLDER_REGEX =
     /^\d{4}-\d{2}-\d{2}-(am|pm)\d{2}-\d{2}$/;
@@ -197,31 +199,31 @@ function createWindow() {
 
     mainWindow = new BrowserWindow({
 
-    width,
-    height,
+        width,
+        height,
 
-    fullscreen:true,
+        fullscreen: true,
 
-    kiosk:true,
+        kiosk: true,
 
-    autoHideMenuBar:true,
+        autoHideMenuBar: true,
 
-    backgroundColor:"#ffffff",
+        backgroundColor: "#ffffff",
 
-    frame:false,
+        frame: false,
 
-    webPreferences: {
+        webPreferences: {
 
-        preload: path.join(
-            __dirname,
-            "preload.js"
-        ),
+            preload: path.join(
+                __dirname,
+                "preload.js"
+            ),
 
-        nodeIntegration:true,
+            nodeIntegration: true,
 
-        contextIsolation:true
-    }
-});
+            contextIsolation: true
+        }
+    });
 
     mainWindow.loadFile(
         "src/index.html"
@@ -267,8 +269,8 @@ function removeFolderRecursive(folderPath) {
             fs.rmSync(
                 folderPath,
                 {
-                    recursive:true,
-                    force:true
+                    recursive: true,
+                    force: true
                 }
             );
 
@@ -316,24 +318,6 @@ function removeFile(filePath) {
     }
 }
 
-function scheduleFolderDelete(folderPath) {
-
-    setTimeout(() => {
-
-        removeFolderRecursive(folderPath);
-
-    }, getDeleteMs());
-}
-
-function scheduleFileDelete(filePath) {
-
-    setTimeout(() => {
-
-        removeFile(filePath);
-
-    }, getDeleteMs());
-}
-
 function cleanupOldDownloadSessionFolders() {
 
     try {
@@ -348,7 +332,7 @@ function cleanupOldDownloadSessionFolders() {
             fs.readdirSync(
                 getSavePath(),
                 {
-                    withFileTypes:true
+                    withFileTypes: true
                 }
             );
 
@@ -408,7 +392,7 @@ function cleanupOldDSLRImportFiles() {
             fs.readdirSync(
                 DSLR_WATCH_FOLDER,
                 {
-                    withFileTypes:true
+                    withFileTypes: true
                 }
             );
 
@@ -468,90 +452,7 @@ function startAutoCleanup() {
 
         cleanupOldDSLRImportFiles();
 
-    }, 5 * 60 * 1000);
-}
-
-function startDSLRWatcher() {
-
-    ensureFolders();
-
-    dslrWatcher = chokidar.watch(
-        DSLR_WATCH_FOLDER,
-        {
-            ignoreInitial:true
-        }
-    );
-
-    writeLog(
-        "DSLR Watcher 시작"
-    );
-
-    dslrWatcher.on(
-        "add",
-        async (filePath) => {
-
-            try {
-
-                if (!currentSessionFolder) {
-
-                    writeLog(
-                        "세션 폴더 없음"
-                    );
-
-                    return;
-                }
-
-                const ext =
-                    path.extname(filePath)
-                        .toLowerCase();
-
-                const allowedExt = [
-                    ".jpg",
-                    ".jpeg",
-                    ".png",
-                    ".cr2",
-                    ".cr3",
-                    ".nef",
-                    ".arw",
-                    ".dng"
-                ];
-
-                if (!allowedExt.includes(ext)) {
-                    return;
-                }
-
-                const fileName =
-                    path.basename(filePath);
-
-                const targetPath =
-                    path.join(
-                        currentSessionFolder,
-                        fileName
-                    );
-
-                await waitForFile(filePath);
-
-                fs.copyFileSync(
-                    filePath,
-                    targetPath
-                );
-
-                writeLog(
-                    `DSLR 원본 저장 완료: ${targetPath}`
-                );
-
-                scheduleFileDelete(
-                    filePath
-                );
-
-            } catch (error) {
-
-                writeLog(
-                    `DSLR 감지 실패: ${error}`
-                );
-            }
-        }
-    );
+    }, 10 * 1000);
 }
 
 function waitForFile(filePath) {
@@ -607,6 +508,10 @@ ipcMain.handle(
                 appSettings.autoLaunch
         });
 
+        cleanupOldDownloadSessionFolders();
+
+        cleanupOldDSLRImportFiles();
+
         return appSettings;
     }
 );
@@ -619,16 +524,16 @@ ipcMain.handle(
             await dialog.showOpenDialog(
                 mainWindow,
                 {
-                    properties:[
+                    properties: [
                         "openDirectory"
                     ]
                 }
             );
 
-        if(
+        if (
             result.canceled ||
             result.filePaths.length === 0
-        ){
+        ) {
             return null;
         }
 
@@ -684,19 +589,17 @@ ipcMain.handle(
                 folderName
             );
 
+        processedDSLRFiles.clear();
+
         if (!fs.existsSync(currentSessionFolder)) {
 
             fs.mkdirSync(
                 currentSessionFolder,
                 {
-                    recursive:true
+                    recursive: true
                 }
             );
         }
-
-        scheduleFolderDelete(
-            currentSessionFolder
-        );
 
         writeLog(
             `세션 폴더 생성: ${currentSessionFolder}`
@@ -753,40 +656,239 @@ ipcMain.handle(
     "capture-dslr",
     async () => {
 
-        try {
+        return new Promise((resolve) => {
 
-            const digiCamPath =
-                `"C:\\Program Files (x86)\\digiCamControl\\CameraControlCmd.exe"`;
+            try {
 
-            exec(
-                `${digiCamPath} /capture`,
-                (error) => {
+                writeLog(
+                    "DSLR 촬영 시작"
+                );
 
-                    if (error) {
+                const captureStartTime =
+                    Date.now();
+
+                const digiCamPath =
+                    `"C:\\Program Files (x86)\\digiCamControl\\CameraControlCmd.exe"`;
+
+                exec(
+                    `${digiCamPath} /capture`,
+                    async (
+                        error,
+                        stdout,
+                        stderr
+                    ) => {
+
+                        if (error) {
+
+                            writeLog(
+                                `DSLR 촬영 실패: ${error}`
+                            );
+
+                            resolve(false);
+
+                            return;
+                        }
 
                         writeLog(
-                            `DSLR 촬영 실패: ${error}`
+                            `DSLR capture stdout: ${stdout}`
                         );
 
-                        return;
+                        if (stderr) {
+
+                            writeLog(
+                                `DSLR capture stderr: ${stderr}`
+                            );
+                        }
+
+                        const startTime =
+                            Date.now();
+
+                        const maxWait =
+                            (
+                                appSettings.captureSeconds *
+                                1000
+                            ) - 1000;
+
+                        const checkInterval =
+                            setInterval(async () => {
+
+                                try {
+
+                                    if (
+                                        !fs.existsSync(
+                                            DSLR_WATCH_FOLDER
+                                        )
+                                    ) {
+                                        return;
+                                    }
+
+                                    const files =
+                                        fs.readdirSync(
+                                            DSLR_WATCH_FOLDER
+                                        );
+
+                                    const imageFiles =
+                                        files.filter(file => {
+
+                                            const ext =
+                                                path.extname(file)
+                                                    .toLowerCase();
+
+                                            return [
+                                                ".jpg",
+                                                ".jpeg",
+                                                ".png",
+                                                ".cr2",
+                                                ".cr3",
+                                                ".nef",
+                                                ".arw",
+                                                ".dng"
+                                            ].includes(ext);
+                                        });
+
+                                    /*
+                                        최신 파일 우선 정렬
+                                    */
+                                    const sortedFiles =
+                                        imageFiles
+                                            .map(file => {
+
+                                                const filePath =
+                                                    path.join(
+                                                        DSLR_WATCH_FOLDER,
+                                                        file
+                                                    );
+
+                                                const stats =
+                                                    fs.statSync(
+                                                        filePath
+                                                    );
+
+                                                return {
+                                                    file,
+                                                    filePath,
+                                                    mtimeMs:
+                                                        stats.mtimeMs
+                                                };
+                                            })
+                                            .sort((a, b) =>
+                                                b.mtimeMs -
+                                                a.mtimeMs
+                                            );
+
+                                    const latestFile =
+                                        sortedFiles.find(item => {
+
+                                            /*
+                                                이미 처리한 파일 제외
+                                            */
+                                            if (
+                                                processedDSLRFiles.has(
+                                                    item.file
+                                                )
+                                            ) {
+                                                return false;
+                                            }
+
+                                            /*
+                                                이번 촬영 이후 파일만
+                                            */
+                                            return (
+                                                item.mtimeMs >=
+                                                captureStartTime - 1000
+                                            );
+                                        });
+
+                                    if (latestFile) {
+
+                                        /*
+                                            파일 저장 완료 대기
+                                        */
+                                        waitForFile(
+                                            latestFile.filePath
+                                        );
+
+                                        const targetPath =
+                                            path.join(
+                                                currentSessionFolder,
+                                                latestFile.file
+                                            );
+
+                                        /*
+                                            실제 원본 복사
+                                        */
+                                        fs.copyFileSync(
+                                            latestFile.filePath,
+                                            targetPath
+                                        );
+
+                                        /*
+                                            처리 완료 기록
+                                        */
+                                        processedDSLRFiles.add(
+                                            latestFile.file
+                                        );
+
+                                        clearInterval(
+                                            checkInterval
+                                        );
+
+                                        writeLog(
+                                            `DSLR 원본 저장 완료: ${targetPath}`
+                                        );
+
+                                        /*
+                                            복사 완료 후 resolve
+                                        */
+                                        resolve(true);
+
+                                        return;
+                                    }
+
+                                    if (
+                                        Date.now() - startTime >
+                                        maxWait
+                                    ) {
+
+                                        clearInterval(
+                                            checkInterval
+                                        );
+
+                                        writeLog(
+                                            "DSLR 다운로드 timeout"
+                                        );
+
+                                        resolve(false);
+                                    }
+
+                                } catch (watchError) {
+
+                                    clearInterval(
+                                        checkInterval
+                                    );
+
+                                    writeLog(
+                                        `DSLR watcher 오류: ${watchError}`
+                                    );
+
+                                    resolve(false);
+                                }
+
+                            }, 500);
+
                     }
+                );
 
-                    writeLog(
-                        "DSLR 촬영 완료"
-                    );
-                }
-            );
+            } catch (error) {
 
-            return true;
+                writeLog(
+                    `DSLR IPC 실패: ${error}`
+                );
 
-        } catch (error) {
+                resolve(false);
+            }
 
-            writeLog(
-                `DSLR IPC 실패: ${error}`
-            );
-
-            return false;
-        }
+        });
     }
 );
 
@@ -802,14 +904,12 @@ app.whenReady().then(() => {
 
     createWindow();
 
-    startDSLRWatcher();
-
     startAutoCleanup();
 
     autoUpdater.checkForUpdatesAndNotify();
-    });
+});
 
-    autoUpdater.on(
+autoUpdater.on(
     "update-available",
     () => {
 
@@ -849,9 +949,9 @@ app.on(
             "before-input-event",
             (event, input) => {
 
-                if(
+                if (
                     input.key === "Escape"
-                ){
+                ) {
 
                     event.preventDefault();
                 }

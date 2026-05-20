@@ -108,6 +108,10 @@ let isCapturingBlocked = false;
 
 let isCaptureProcessing = false;
 
+let pendingCapture = false;
+
+let thumbnailTimeout = null;
+
 let appSettings = {
     sessionMinutes: 20,
     captureSeconds: 10,
@@ -319,6 +323,16 @@ async function startCamera() {
 
         camera.srcObject = stream;
 
+        camera.onloadedmetadata = () => {
+
+            applyDynamicCameraCrop();
+        };
+
+        window.addEventListener(
+            "resize",
+            applyDynamicCameraCrop
+        );
+
         const videoTrack =
             stream.getVideoTracks()[0];
 
@@ -344,6 +358,100 @@ async function startCamera() {
 
         handleCameraDisconnect();
     }
+}
+
+function applyDynamicCameraCrop() {
+
+    if (
+        !camera.videoWidth ||
+        !camera.videoHeight
+    ) {
+        return;
+    }
+
+    /*
+        세로 모니터 여부
+    */
+    const isPortraitScreen =
+        window.innerHeight >
+        window.innerWidth;
+
+    /*
+        가로 모니터
+        =
+        원본 비율 그대로
+    */
+    if (!isPortraitScreen) {
+
+        camera.style.position =
+            "absolute";
+
+        camera.style.top =
+            "50%";
+
+        camera.style.left =
+            "50%";
+
+        camera.style.width =
+            "100vw";
+
+        camera.style.height =
+            "auto";
+
+        camera.style.minHeight =
+            "100vh";
+
+        camera.style.objectFit =
+            "cover";
+
+        camera.style.transform =
+            `
+translate(-50%, -50%)
+scaleX(-1)
+`;
+
+        return;
+    }
+
+    /*
+        세로 피벗 모니터
+        =
+        높이 고정
+        좌우 crop
+    */
+    camera.style.position =
+        "absolute";
+
+    camera.style.top =
+        "50%";
+
+    camera.style.left =
+        "50%";
+
+    /*
+        핵심
+    */
+    camera.style.height =
+        "100vh";
+
+    camera.style.width =
+        "auto";
+
+    /*
+        세로 화면에서
+        폭 부족 방지
+    */
+    camera.style.minWidth =
+        "100vw";
+
+    camera.style.objectFit =
+        "cover";
+
+    camera.style.transform =
+        `
+translate(-50%, -50%)
+scaleX(-1)
+`;
 }
 
 function handleCameraDisconnect() {
@@ -437,11 +545,7 @@ function startSessionTimer() {
     );
 
     sessionInterval =
-        setInterval(() => {
-
-            if(isCaptureProcessing){
-                return;
-            }
+        setInterval(async () => {
 
             sessionTime--;
 
@@ -459,14 +563,10 @@ function startSessionTimer() {
                 captureTime =
                     appSettings.captureSeconds;
 
-                updateSessionText();
-
                 triggerCapture();
-
-            } else {
-
-                updateSessionText();
             }
+
+            updateSessionText();
 
             if (sessionTime <= 0) {
 
@@ -519,50 +619,37 @@ async function triggerCapture() {
 
     isCaptureProcessing = true;
 
+    /*
+        flash 즉시 실행
+    */
+    camera.classList.remove(
+        "flash"
+    );
+
+    void camera.offsetWidth;
+
+    camera.classList.add(
+        "flash"
+    );
+
+    setTimeout(() => {
+
+        camera.classList.remove(
+            "flash"
+        );
+
+    }, 180);
+
     try {
 
-        let success = false;
+        capturePhoto();
 
-        for (
-            let attempt = 1;
-            attempt <= 3;
-            attempt++
-        ) {
+    } catch (error) {
 
-            console.log(
-                `촬영 시도 ${attempt}`
-            );
-
-            success =
-                await capturePhoto();
-
-            if (success) {
-
-                console.log(
-                    "촬영 성공"
-                );
-
-                break;
-            }
-
-            console.log(
-                "촬영 재시도"
-            );
-
-            await new Promise(resolve =>
-                setTimeout(
-                    resolve,
-                    1000
-                )
-            );
-        }
-
-        if (!success) {
-
-            console.log(
-                "최종 촬영 실패"
-            );
-        }
+        console.log(
+            "triggerCapture 오류",
+            error
+        );
 
     } finally {
 
@@ -570,38 +657,134 @@ async function triggerCapture() {
     }
 }
 
+function dataURLToUint8Array(dataURL) {
+
+    const base64 =
+        dataURL.split(",")[1];
+
+    const binary =
+        atob(base64);
+
+    const length =
+        binary.length;
+
+    const bytes =
+        new Uint8Array(length);
+
+    for (
+        let i = 0;
+        i < length;
+        i++
+    ) {
+
+        bytes[i] =
+            binary.charCodeAt(i);
+    }
+
+    return bytes;
+}
+
 async function capturePhoto() {
 
     try {
 
-        camera.classList.add(
-            "flash"
-        );
-
-        setTimeout(() => {
-
-            camera.classList.remove(
-                "flash"
-            );
-
-        }, 200);
-
-        const success =
-            await window.electronAPI
-                .captureDSLR();
-
-        if (!success) {
-
-            console.log(
-                "DSLR 촬영 실패"
-            );
+        if (
+            !camera.videoWidth ||
+            !camera.videoHeight
+        ) {
 
             return false;
         }
 
-        console.log(
-            "DSLR 촬영 요청 완료"
+        const canvas =
+            document.createElement(
+                "canvas"
+            );
+
+        canvas.width =
+            camera.videoWidth;
+
+        canvas.height =
+            camera.videoHeight;
+
+        const ctx =
+            canvas.getContext("2d");
+
+        ctx.translate(
+            canvas.width,
+            0
         );
+
+        ctx.scale(-1, 1);
+
+        ctx.drawImage(
+            camera,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        const imageData =
+            canvas.toDataURL(
+                "image/jpeg",
+                1
+            );
+
+        const buffer =
+            dataURLToUint8Array(
+                imageData
+            );
+
+        const fileName =
+            `webcam_${Date.now()}.jpg`;
+
+        await window.electronAPI
+            .savePhoto({
+                fileName,
+                buffer
+            });
+
+        /*
+            썸네일 무조건 갱신
+        */
+        lastPhotoPreview.srcObject =
+            null;
+
+        lastPhotoPreview.classList.remove(
+            "show"
+        );
+
+        void lastPhotoPreview.offsetWidth;
+
+        lastPhotoPreview.src =
+            imageData;
+
+        lastPhotoPreview.classList.add(
+            "show"
+        );
+
+        /*
+            이전 timeout 제거
+        */
+        clearTimeout(
+            thumbnailTimeout
+        );
+
+        thumbnailTimeout =
+            setTimeout(() => {
+
+                lastPhotoPreview.classList.remove(
+                    "show"
+                );
+
+            }, 3000);
+
+        /*
+            DSLR 원본 촬영
+        */
+        window.electronAPI
+            .captureDSLR();
 
         return true;
 
