@@ -306,9 +306,34 @@ async function startCamera() {
                         deviceId: {
                             exact:
                                 appSettings.selectedCameraId
+                        },
+
+                        width: {
+                            ideal: 1920
+                        },
+
+                        height: {
+                            ideal: 1080
+                        },
+
+                        aspectRatio: {
+                            ideal: 16 / 9
                         }
                     }
-                    : true,
+                    : {
+                        width: {
+                            ideal: 1920
+                        },
+
+                        height: {
+                            ideal: 1080
+                        },
+
+                        aspectRatio: {
+                            ideal: 16 / 9
+                        }
+                    },
+
             audio: false
         };
 
@@ -369,56 +394,14 @@ function applyDynamicCameraCrop() {
         return;
     }
 
-    /*
-        세로 모니터 여부
-    */
-    const isPortraitScreen =
-        window.innerHeight >
-        window.innerWidth;
+    const screenRatio =
+        window.innerWidth /
+        window.innerHeight;
 
-    /*
-        가로 모니터
-        =
-        원본 비율 그대로
-    */
-    if (!isPortraitScreen) {
+    const videoRatio =
+        camera.videoWidth /
+        camera.videoHeight;
 
-        camera.style.position =
-            "absolute";
-
-        camera.style.top =
-            "50%";
-
-        camera.style.left =
-            "50%";
-
-        camera.style.width =
-            "100vw";
-
-        camera.style.height =
-            "auto";
-
-        camera.style.minHeight =
-            "100vh";
-
-        camera.style.objectFit =
-            "cover";
-
-        camera.style.transform =
-            `
-translate(-50%, -50%)
-scaleX(-1)
-`;
-
-        return;
-    }
-
-    /*
-        세로 피벗 모니터
-        =
-        높이 고정
-        좌우 crop
-    */
     camera.style.position =
         "absolute";
 
@@ -429,23 +412,35 @@ scaleX(-1)
         "50%";
 
     /*
-        핵심
+        화면보다 카메라가 더 넓은 경우
+        =
+        높이 꽉 채우기
     */
-    camera.style.height =
-        "100vh";
+    if (videoRatio > screenRatio) {
 
-    camera.style.width =
-        "auto";
+        camera.style.width =
+            "auto";
+
+        camera.style.height =
+            "100vh";
+    }
 
     /*
-        세로 화면에서
-        폭 부족 방지
+        화면보다 카메라가 더 세로인 경우
+        =
+        폭 꽉 채우기
     */
-    camera.style.minWidth =
-        "100vw";
+    else {
+
+        camera.style.width =
+            "100vw";
+
+        camera.style.height =
+            "auto";
+    }
 
     camera.style.objectFit =
-        "cover";
+        "contain";
 
     camera.style.transform =
         `
