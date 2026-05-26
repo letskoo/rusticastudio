@@ -117,6 +117,8 @@ let pendingCapture = false;
 
 let thumbnailTimeout = null;
 
+let startButtonLockUntil = 0;
+
 let appSettings = {
     sessionMinutes: 20,
     captureSeconds: 10,
@@ -173,6 +175,17 @@ window.addEventListener(
 startBtn.addEventListener(
     "click",
     async () => {
+
+        /*
+            시작 버튼 잠금
+        */
+        if (
+            Date.now() <
+            startButtonLockUntil
+        ) {
+
+            return;
+        }
 
         startPage.classList.remove(
             "active"
@@ -1106,6 +1119,13 @@ if (navigator.mediaDevices) {
 endSessionBtn.addEventListener(
     "click",
     () => {
+
+        /*
+            5분 잠금
+        */
+        startButtonLockUntil =
+            Date.now() +
+            (5 * 60 * 1000);
 
         resetToStart();
     }
