@@ -98,6 +98,21 @@ const endSessionBtn =
         "end-session-btn"
     );
 
+const endConfirmModal =
+    document.getElementById(
+        "end-confirm-modal"
+    );
+
+const confirmEndBtn =
+    document.getElementById(
+        "confirm-end-btn"
+    );
+
+const cancelEndBtn =
+    document.getElementById(
+        "cancel-end-btn"
+    );
+
 let sessionTime = 1200;
 let captureTime = 10;
 
@@ -1127,6 +1142,30 @@ if (navigator.mediaDevices) {
 endSessionBtn.addEventListener(
     "click",
     () => {
+
+        endConfirmModal.classList.add(
+            "show"
+        );
+    }
+);
+
+cancelEndBtn.addEventListener(
+    "click",
+    () => {
+
+        endConfirmModal.classList.remove(
+            "show"
+        );
+    }
+);
+
+confirmEndBtn.addEventListener(
+    "click",
+    () => {
+
+        endConfirmModal.classList.remove(
+            "show"
+        );
 
         /*
             5분 잠금
