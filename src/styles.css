@@ -544,3 +544,12 @@ body {
 
     background: rgba(255, 255, 255, 0.2);
 }
+
+#start-btn.disabled {
+
+    opacity: 0.45;
+
+    filter: grayscale(1);
+
+    cursor: not-allowed;
+}

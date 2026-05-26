@@ -184,8 +184,16 @@ startBtn.addEventListener(
             startButtonLockUntil
         ) {
 
+            startBtn.classList.add(
+                "disabled"
+            );
+
             return;
         }
+
+        startBtn.classList.remove(
+            "disabled"
+        );
 
         startPage.classList.remove(
             "active"
@@ -1126,6 +1134,18 @@ endSessionBtn.addEventListener(
         startButtonLockUntil =
             Date.now() +
             (5 * 60 * 1000);
+
+        startBtn.classList.add(
+            "disabled"
+        );
+
+        setTimeout(() => {
+
+            startBtn.classList.remove(
+                "disabled"
+            );
+
+        }, 5 * 60 * 1000);
 
         resetToStart();
     }
