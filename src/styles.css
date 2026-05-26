@@ -41,7 +41,7 @@ body {
 
 #start-btn {
     position: absolute;
-    bottom: 7%;
+    bottom: 12%;
     left: 50%;
     transform: translateX(-50%);
     width: 22%;
@@ -140,7 +140,7 @@ body {
     top: 3.2%;
     right: 50%;
 
-    transform: translateX(210px);
+    transform: translateX(270px);
 
     color: white;
 
@@ -506,4 +506,41 @@ body {
     color: #111111;
 
     border: 1px solid #d1d5db;
+}
+
+#end-session-btn {
+
+    position: absolute;
+
+    bottom: 37px;
+    right: 50%;
+
+    transform: translateX(270px);
+
+    width: 120px;
+    height: 40px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background: rgba(0, 0, 0, 0.72);
+
+    color: white;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    z-index: 20;
+
+    backdrop-filter: blur(10px);
+
+    transition: 0.2s;
+}
+
+#end-session-btn:hover {
+
+    background: rgba(255, 255, 255, 0.2);
 }

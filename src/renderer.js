@@ -93,6 +93,11 @@ const currentSavePath =
         "current-save-path"
     );
 
+const endSessionBtn =
+    document.getElementById(
+        "end-session-btn"
+    );
+
 let sessionTime = 1200;
 let captureTime = 10;
 
@@ -131,6 +136,33 @@ countdownAudio.volume = 1;
 window.addEventListener(
     "DOMContentLoaded",
     async () => {
+
+        try {
+
+            /*
+                먼저 권한 확보
+            */
+            const tempStream =
+                await navigator
+                    .mediaDevices
+                    .getUserMedia({
+                        video: true,
+                        audio: false
+                    });
+
+            tempStream
+                .getTracks()
+                .forEach(track =>
+                    track.stop()
+                );
+
+        } catch (error) {
+
+            console.log(
+                "카메라 권한 오류",
+                error
+            );
+        }
 
         await loadSettings();
 
@@ -637,7 +669,7 @@ async function triggerCapture() {
 
     try {
 
-        capturePhoto();
+        await capturePhoto();
 
     } catch (error) {
 
@@ -691,57 +723,48 @@ async function capturePhoto() {
             return false;
         }
 
-        const canvas =
+        /*
+    썸네일 전용
+*/
+        const previewCanvas =
             document.createElement(
                 "canvas"
             );
 
-        canvas.width =
+        previewCanvas.width =
             camera.videoWidth;
 
-        canvas.height =
+        previewCanvas.height =
             camera.videoHeight;
 
-        const ctx =
-            canvas.getContext("2d");
+        const previewCtx =
+            previewCanvas.getContext(
+                "2d"
+            );
 
-        ctx.translate(
-            canvas.width,
+        previewCtx.translate(
+            previewCanvas.width,
             0
         );
 
-        ctx.scale(-1, 1);
+        previewCtx.scale(-1, 1);
 
-        ctx.drawImage(
+        previewCtx.drawImage(
             camera,
             0,
             0,
-            canvas.width,
-            canvas.height
+            previewCanvas.width,
+            previewCanvas.height
         );
 
-        const imageData =
-            canvas.toDataURL(
+        const previewData =
+            previewCanvas.toDataURL(
                 "image/jpeg",
-                1
+                0.7
             );
-
-        const buffer =
-            dataURLToUint8Array(
-                imageData
-            );
-
-        const fileName =
-            `webcam_${Date.now()}.jpg`;
-
-        await window.electronAPI
-            .savePhoto({
-                fileName,
-                buffer
-            });
 
         /*
-            썸네일 무조건 갱신
+            썸네일 표시
         */
         lastPhotoPreview.srcObject =
             null;
@@ -753,15 +776,12 @@ async function capturePhoto() {
         void lastPhotoPreview.offsetWidth;
 
         lastPhotoPreview.src =
-            imageData;
+            previewData;
 
         lastPhotoPreview.classList.add(
             "show"
         );
 
-        /*
-            이전 timeout 제거
-        */
         clearTimeout(
             thumbnailTimeout
         );
@@ -776,10 +796,112 @@ async function capturePhoto() {
             }, 3000);
 
         /*
-            DSLR 원본 촬영
+            DSLR / 미러리스 여부 판단
         */
-        window.electronAPI
-            .captureDSLR();
+        const videoTrack =
+            currentStream
+                ?.getVideoTracks?.()[0];
+
+        const trackLabel =
+            videoTrack
+                ?.label
+                ?.toLowerCase?.() || "";
+
+        const selectedText =
+            cameraSelect.options[
+                cameraSelect.selectedIndex
+            ]?.textContent?.toLowerCase?.() || "";
+
+        const cameraName =
+            `${trackLabel} ${selectedText}`;
+
+        const isDSLR =
+            cameraName.includes("nikon") ||
+            cameraName.includes("canon") ||
+            cameraName.includes("sony") ||
+            cameraName.includes("fujifilm") ||
+            cameraName.includes("lumix") ||
+            cameraName.includes("eos") ||
+            cameraName.includes("alpha") ||
+            cameraName.includes("z5") ||
+            cameraName.includes("d750");
+
+        /*
+            DSLR / 미러리스
+            =
+            원본 저장
+        */
+        if (isDSLR) {
+
+            window.electronAPI
+                .captureDSLR()
+                .catch(error => {
+
+                    console.log(
+                        "DSLR 저장 오류",
+                        error
+                    );
+                });
+        }
+
+        /*
+            웹캠 / 내장캠
+            =
+            최대 해상도 저장
+        */
+        else {
+
+            const originalCanvas =
+                document.createElement(
+                    "canvas"
+                );
+
+            originalCanvas.width =
+                camera.videoWidth;
+
+            originalCanvas.height =
+                camera.videoHeight;
+
+            const originalCtx =
+                originalCanvas.getContext(
+                    "2d"
+                );
+
+            originalCtx.translate(
+                originalCanvas.width,
+                0
+            );
+
+            originalCtx.scale(-1, 1);
+
+            originalCtx.drawImage(
+                camera,
+                0,
+                0,
+                originalCanvas.width,
+                originalCanvas.height
+            );
+
+            const originalData =
+                originalCanvas.toDataURL(
+                    "image/jpeg",
+                    1
+                );
+
+            const buffer =
+                dataURLToUint8Array(
+                    originalData
+                );
+
+            const fileName =
+                `webcam_${Date.now()}.jpg`;
+
+            await window.electronAPI
+                .savePhoto({
+                    fileName,
+                    buffer
+                });
+        }
 
         return true;
 
@@ -980,3 +1102,11 @@ if (navigator.mediaDevices) {
             }
         );
 }
+
+endSessionBtn.addEventListener(
+    "click",
+    () => {
+
+        resetToStart();
+    }
+);

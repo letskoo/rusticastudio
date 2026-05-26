@@ -459,28 +459,54 @@ function waitForFile(filePath) {
 
     return new Promise((resolve) => {
 
-        let previousSize = -1;
+        const startTime =
+            Date.now();
+
+        const timeout = 15000;
 
         const interval =
             setInterval(() => {
 
-                if (!fs.existsSync(filePath)) {
-                    return;
-                }
+                try {
 
-                const stats =
-                    fs.statSync(filePath);
+                    if (!fs.existsSync(filePath)) {
+                        return;
+                    }
 
-                if (stats.size === previousSize) {
+                    /*
+                        파일 열기 가능하면
+                        저장 완료로 판단
+                    */
+                    const fd =
+                        fs.openSync(
+                            filePath,
+                            "r+"
+                        );
+
+                    fs.closeSync(fd);
 
                     clearInterval(interval);
 
-                    resolve();
+                    resolve(true);
+
+                } catch (error) {
+
+                    /*
+                        아직 저장 중
+                    */
                 }
 
-                previousSize = stats.size;
+                if (
+                    Date.now() - startTime >
+                    timeout
+                ) {
 
-            }, 500);
+                    clearInterval(interval);
+
+                    resolve(false);
+                }
+
+            }, 200);
     });
 }
 
@@ -703,11 +729,7 @@ ipcMain.handle(
                         const startTime =
                             Date.now();
 
-                        const maxWait =
-                            (
-                                appSettings.captureSeconds *
-                                1000
-                            ) - 1000;
+                        const maxWait = 15000;
 
                         const checkInterval =
                             setInterval(async () => {
@@ -746,9 +768,6 @@ ipcMain.handle(
                                             ].includes(ext);
                                         });
 
-                                    /*
-                                        최신 파일 우선 정렬
-                                    */
                                     const sortedFiles =
                                         imageFiles
                                             .map(file => {
@@ -779,9 +798,6 @@ ipcMain.handle(
                                     const latestFile =
                                         sortedFiles.find(item => {
 
-                                            /*
-                                                이미 처리한 파일 제외
-                                            */
                                             if (
                                                 processedDSLRFiles.has(
                                                     item.file
@@ -790,9 +806,6 @@ ipcMain.handle(
                                                 return false;
                                             }
 
-                                            /*
-                                                이번 촬영 이후 파일만
-                                            */
                                             return (
                                                 item.mtimeMs >=
                                                 captureStartTime - 1000
@@ -801,10 +814,7 @@ ipcMain.handle(
 
                                     if (latestFile) {
 
-                                        /*
-                                            파일 저장 완료 대기
-                                        */
-                                        waitForFile(
+                                        await waitForFile(
                                             latestFile.filePath
                                         );
 
@@ -814,17 +824,32 @@ ipcMain.handle(
                                                 latestFile.file
                                             );
 
-                                        /*
-                                            실제 원본 복사
-                                        */
-                                        fs.copyFileSync(
-                                            latestFile.filePath,
-                                            targetPath
-                                        );
+                                        try {
 
-                                        /*
-                                            처리 완료 기록
-                                        */
+                                            fs.copyFileSync(
+                                                latestFile.filePath,
+                                                targetPath
+                                            );
+
+                                            writeLog(
+                                                `복사 성공: ${targetPath}`
+                                            );
+
+                                        } catch (copyError) {
+
+                                            clearInterval(
+                                                checkInterval
+                                            );
+
+                                            writeLog(
+                                                `DSLR 파일 복사 실패: ${copyError}`
+                                            );
+
+                                            resolve(false);
+
+                                            return;
+                                        }
+
                                         processedDSLRFiles.add(
                                             latestFile.file
                                         );
@@ -837,9 +862,6 @@ ipcMain.handle(
                                             `DSLR 원본 저장 완료: ${targetPath}`
                                         );
 
-                                        /*
-                                            복사 완료 후 resolve
-                                        */
                                         resolve(true);
 
                                         return;
@@ -874,7 +896,7 @@ ipcMain.handle(
                                     resolve(false);
                                 }
 
-                            }, 500);
+                            }, 200);
 
                     }
                 );
