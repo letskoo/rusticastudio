@@ -143,6 +143,8 @@ let appSettings = {
     savePath: ""
 };
 
+let currentCameraDeviceId = "";
+
 const countdownAudio =
     new Audio(
         "../assets/sounds/countdown.MP3"
@@ -183,7 +185,48 @@ window.addEventListener(
 
         await loadSettings();
 
-        await loadCameraList();
+        let cameraReady = false;
+
+        for (
+            let i = 0;
+            i < 30;
+            i++
+        ) {
+
+            await loadCameraList();
+
+            const hasSavedCamera =
+                Array.from(
+                    cameraSelect.options
+                ).some(
+                    option =>
+                        option.value ===
+                        appSettings.selectedCameraId
+                );
+
+            if (hasSavedCamera) {
+
+                cameraSelect.value =
+                    appSettings.selectedCameraId;
+
+                cameraReady = true;
+
+                break;
+            }
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 500)
+            );
+        }
+
+        if (!cameraReady) {
+
+            console.log(
+                "저장된 카메라 못찾음"
+            );
+        }
+
+        await startCamera();
     }
 );
 
@@ -414,12 +457,33 @@ async function startCamera() {
 
         currentStream = stream;
 
+        const activeTrack =
+            stream.getVideoTracks()[0];
+
+        console.log(
+            "실제 연결 카메라:",
+            activeTrack.label
+        );
+
+        currentCameraDeviceId =
+            activeTrack?.getSettings?.().deviceId || "";
+
         camera.srcObject = stream;
 
         camera.onloadedmetadata = () => {
 
+            camera.play().catch(error => {
+
+                console.log(
+                    "카메라 재생 실패",
+                    error
+                );
+            });
+
             applyDynamicCameraCrop();
         };
+
+
 
         window.addEventListener(
             "resize",
@@ -449,7 +513,25 @@ async function startCamera() {
             error
         );
 
-        handleCameraDisconnect();
+        /*
+            DSLR virtual webcam은
+            연결까지 시간이 오래 걸릴 수 있음
+        */
+
+        setTimeout(async () => {
+
+            try {
+
+                await startCamera();
+
+            } catch (retryError) {
+
+                console.log(
+                    "카메라 재시도 실패"
+                );
+            }
+
+        }, 2000);
     }
 }
 
@@ -851,16 +933,21 @@ async function capturePhoto() {
         const cameraName =
             `${trackLabel} ${selectedText}`;
 
+        const currentCameraText =
+            cameraSelect.options[
+                cameraSelect.selectedIndex
+            ]?.textContent
+                ?.toLowerCase?.() || "";
+
         const isDSLR =
-            cameraName.includes("nikon") ||
-            cameraName.includes("canon") ||
-            cameraName.includes("sony") ||
-            cameraName.includes("fujifilm") ||
-            cameraName.includes("lumix") ||
-            cameraName.includes("eos") ||
-            cameraName.includes("alpha") ||
-            cameraName.includes("z5") ||
-            cameraName.includes("d750");
+            currentCameraText.includes("nikon") ||
+            currentCameraText.includes("canon") ||
+            currentCameraText.includes("sony") ||
+            currentCameraText.includes("fujifilm") ||
+            currentCameraText.includes("lumix") ||
+            currentCameraText.includes("eos") ||
+            currentCameraText.includes("alpha") ||
+            currentCameraText.includes("webcam utility");
 
         /*
             DSLR / 미러리스
@@ -869,15 +956,31 @@ async function capturePhoto() {
         */
         if (isDSLR) {
 
-            window.electronAPI
-                .captureDSLR()
-                .catch(error => {
+            try {
 
-                    console.log(
-                        "DSLR 저장 오류",
-                        error
-                    );
-                });
+                window.electronAPI
+                    .captureDSLR()
+                    .then(result => {                        
+
+                    })
+                    .catch(error => {
+
+                        console.log(
+                            "DSLR 저장 오류",
+                            error
+                        );
+
+                    });
+
+                
+
+            } catch (error) {
+
+                console.log(
+                    "DSLR 저장 오류",
+                    error
+                );
+            }
         }
 
         /*
@@ -920,8 +1023,7 @@ async function capturePhoto() {
 
             const originalData =
                 originalCanvas.toDataURL(
-                    "image/jpeg",
-                    1
+                    "image/png"
                 );
 
             const buffer =
@@ -930,7 +1032,7 @@ async function capturePhoto() {
                 );
 
             const fileName =
-                `webcam_${Date.now()}.jpg`;
+                `webcam_${Date.now()}.png`;
 
             await window.electronAPI
                 .savePhoto({
@@ -1172,7 +1274,7 @@ confirmEndBtn.addEventListener(
         */
         startButtonLockUntil =
             Date.now() +
-            (5 * 60 * 1000);
+            (3 * 60 * 1000);
 
         startBtn.classList.add(
             "disabled"
@@ -1184,7 +1286,7 @@ confirmEndBtn.addEventListener(
                 "disabled"
             );
 
-        }, 5 * 60 * 1000);
+        }, 3 * 60 * 1000);
 
         resetToStart();
     }

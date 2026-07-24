@@ -122,8 +122,7 @@ function getSavePath() {
 
 const DSLR_WATCH_FOLDER =
     path.join(
-        os.homedir(),
-        "Pictures",
+        app.getPath("pictures"),
         "digiCamControl",
         "Session1"
     );
@@ -480,7 +479,7 @@ function waitForFile(filePath) {
                     const fd =
                         fs.openSync(
                             filePath,
-                            "r+"
+                            "r"
                         );
 
                     fs.closeSync(fd);
@@ -694,10 +693,10 @@ ipcMain.handle(
                     Date.now();
 
                 const digiCamPath =
-                    `"C:\\Program Files (x86)\\digiCamControl\\CameraControlCmd.exe"`;
+                    "C:\\Program Files (x86)\\digiCamControl\\CameraControlCmd.exe";
 
                 exec(
-                    `${digiCamPath} /capture`,
+                    `"${digiCamPath}" /capture`,
                     async (
                         error,
                         stdout,
@@ -729,20 +728,12 @@ ipcMain.handle(
                         const startTime =
                             Date.now();
 
-                        const maxWait = 15000;
+                        const maxWait = 30000;
 
                         const checkInterval =
                             setInterval(async () => {
 
                                 try {
-
-                                    if (
-                                        !fs.existsSync(
-                                            DSLR_WATCH_FOLDER
-                                        )
-                                    ) {
-                                        return;
-                                    }
 
                                     const files =
                                         fs.readdirSync(
@@ -800,7 +791,7 @@ ipcMain.handle(
 
                                             if (
                                                 processedDSLRFiles.has(
-                                                    item.file
+                                                    item.filePath
                                                 )
                                             ) {
                                                 return false;
@@ -818,40 +809,19 @@ ipcMain.handle(
                                             latestFile.filePath
                                         );
 
+                                        processedDSLRFiles.add(
+                                            latestFile.filePath
+                                        );
+
                                         const targetPath =
                                             path.join(
                                                 currentSessionFolder,
-                                                latestFile.file
+                                                path.basename(latestFile.filePath)
                                             );
 
-                                        try {
-
-                                            fs.copyFileSync(
-                                                latestFile.filePath,
-                                                targetPath
-                                            );
-
-                                            writeLog(
-                                                `복사 성공: ${targetPath}`
-                                            );
-
-                                        } catch (copyError) {
-
-                                            clearInterval(
-                                                checkInterval
-                                            );
-
-                                            writeLog(
-                                                `DSLR 파일 복사 실패: ${copyError}`
-                                            );
-
-                                            resolve(false);
-
-                                            return;
-                                        }
-
-                                        processedDSLRFiles.add(
-                                            latestFile.file
+                                        fs.copyFileSync(
+                                            latestFile.filePath,
+                                            targetPath
                                         );
 
                                         clearInterval(
@@ -859,7 +829,7 @@ ipcMain.handle(
                                         );
 
                                         writeLog(
-                                            `DSLR 원본 저장 완료: ${targetPath}`
+                                            `DSLR 원본 저장 완료: ${latestFile.filePath}`
                                         );
 
                                         resolve(true);
