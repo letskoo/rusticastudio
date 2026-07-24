@@ -1,156 +1,114 @@
-const startPage =
-    document.getElementById(
-        "start-page"
-    );
+import {
+    startPage,
+    adPage,
+    cameraPage,
+    startBtn,
+    camera,
+    sessionTimerText,
+    lastPhotoPreview,
+    reconnectMessage,
+    adminHiddenBtn,
+    adminModal,
+    closeAdminBtn,
+    saveAdminBtn,
+    sessionMinInput,
+    captureSecInput,
+    deleteMinInput,
+    autoLaunchInput,
+    cameraSelect,
+    selectPathBtn,
+    currentSavePath,
+    endSessionBtn,
+    endConfirmModal,
+    confirmEndBtn,
+    cancelEndBtn
+} from "./modules/ui/dom.js";
 
-const adPage =
-    document.getElementById(
-        "ad-page"
-    );
+import {
+    initCameraManager,
+    loadCameraList,
+    startCamera,
+    stopReconnectLoop,
+    handleCameraDisconnect,
+    getCurrentStream,
+    getIsReconnecting,
+    getIsCapturingBlocked
+} from "./modules/camera/cameraManager.js";
 
-const cameraPage =
-    document.getElementById(
-        "camera-page"
-    );
+import {
+    initCaptureManager,
+    triggerCapture
+} from "./modules/capture/captureManager.js";
 
-const startBtn =
-    document.getElementById(
-        "start-btn"
-    );
+import {
+    initTimerManager,
+    startSessionTimer,
+    stopSessionTimer
+} from "./modules/timer/timerManager.js";
 
-const camera =
-    document.getElementById(
-        "camera"
-    );
-
-const sessionTimerText =
-    document.getElementById(
-        "session-timer"
-    );
-
-const lastPhotoPreview =
-    document.getElementById(
-        "last-photo-preview"
-    );
-
-const reconnectMessage =
-    document.getElementById(
-        "camera-reconnect-message"
-    );
-
-const adminHiddenBtn =
-    document.getElementById(
-        "admin-hidden-btn"
-    );
-
-const adminModal =
-    document.getElementById(
-        "admin-modal"
-    );
-
-const closeAdminBtn =
-    document.getElementById(
-        "close-admin-btn"
-    );
-
-const saveAdminBtn =
-    document.getElementById(
-        "save-admin-btn"
-    );
-
-const sessionMinInput =
-    document.getElementById(
-        "session-min-input"
-    );
-
-const captureSecInput =
-    document.getElementById(
-        "capture-sec-input"
-    );
-
-const deleteMinInput =
-    document.getElementById(
-        "delete-min-input"
-    );
-
-const autoLaunchInput =
-    document.getElementById(
-        "auto-launch-input"
-    );
-
-const cameraSelect =
-    document.getElementById(
-        "camera-select"
-    );
-
-const selectPathBtn =
-    document.getElementById(
-        "select-path-btn"
-    );
-
-const currentSavePath =
-    document.getElementById(
-        "current-save-path"
-    );
-
-const endSessionBtn =
-    document.getElementById(
-        "end-session-btn"
-    );
-
-const endConfirmModal =
-    document.getElementById(
-        "end-confirm-modal"
-    );
-
-const confirmEndBtn =
-    document.getElementById(
-        "confirm-end-btn"
-    );
-
-const cancelEndBtn =
-    document.getElementById(
-        "cancel-end-btn"
-    );
-
-let sessionTime = 1200;
-let captureTime = 10;
-
-let sessionInterval;
-
-let currentStream = null;
-
-let reconnectInterval = null;
-
-let isReconnecting = false;
-
-let isCapturingBlocked = false;
-
-let isCaptureProcessing = false;
-
-let pendingCapture = false;
-
-let thumbnailTimeout = null;
+import {
+    initSettingsManager,
+    loadSettings,
+    saveSettings,
+    selectSavePath,
+    getAppSettings
+} from "./modules/settings/settingsManager.js";
 
 let startButtonLockUntil = 0;
 
-let appSettings = {
-    sessionMinutes: 20,
-    captureSeconds: 10,
-    deleteMinutes: 60,
-    selectedCameraId: "",
-    autoLaunch: false,
-    savePath: ""
-};
+initCaptureManager({
 
-let currentCameraDeviceId = "";
+    camera,
 
-const countdownAudio =
-    new Audio(
-        "../assets/sounds/countdown.MP3"
-    );
+    lastPhotoPreview,
 
-countdownAudio.volume = 1;
+    cameraSelect,
+
+    getIsCapturingBlocked
+
+});
+
+initTimerManager({
+
+    sessionTimerText,
+
+    getAppSettings,
+
+    triggerCapture,
+
+    resetToStart
+
+});
+
+initSettingsManager({
+
+    sessionMinInput,
+
+    captureSecInput,
+
+    deleteMinInput,
+
+    autoLaunchInput,
+
+    cameraSelect,
+
+    currentSavePath,
+
+    adminModal
+
+});
+
+initCameraManager({
+
+    camera,
+
+    cameraSelect,
+
+    reconnectMessage,
+
+    getAppSettings
+
+});
 
 window.addEventListener(
     "DOMContentLoaded",
@@ -201,13 +159,13 @@ window.addEventListener(
                 ).some(
                     option =>
                         option.value ===
-                        appSettings.selectedCameraId
+                        getAppSettings().selectedCameraId
                 );
 
             if (hasSavedCamera) {
 
                 cameraSelect.value =
-                    appSettings.selectedCameraId;
+                    getAppSettings().selectedCameraId;
 
                 cameraReady = true;
 
@@ -271,8 +229,7 @@ startBtn.addEventListener(
                 "active"
             );
 
-            await window.electronAPI
-                .createSessionFolder();
+            await window.electronAPI.createSessionFolder();
 
             await startCamera();
 
@@ -282,789 +239,14 @@ startBtn.addEventListener(
     }
 );
 
-async function loadSettings() {
-
-    appSettings =
-        await window.electronAPI
-            .getSettings();
-
-    sessionMinInput.value =
-        appSettings.sessionMinutes;
-
-    captureSecInput.value =
-        appSettings.captureSeconds;
-
-    deleteMinInput.value =
-        appSettings.deleteMinutes;
-
-    autoLaunchInput.checked =
-        appSettings.autoLaunch || false;
-
-    currentSavePath.innerText =
-        appSettings.savePath ||
-        "기본 Downloads";
-}
-
-async function saveSettings() {
-
-    const settings = {
-        sessionMinutes:
-            Number(
-                sessionMinInput.value
-            ) || 20,
-
-        captureSeconds:
-            Number(
-                captureSecInput.value
-            ) || 10,
-
-        deleteMinutes:
-            Number(
-                deleteMinInput.value
-            ) || 60,
-
-        selectedCameraId:
-            cameraSelect.value || "",
-
-        autoLaunch:
-            autoLaunchInput.checked,
-
-        savePath:
-            appSettings.savePath || ""
-    };
-
-    appSettings =
-        await window.electronAPI
-            .saveSettings(settings);
-
-    adminModal.classList.remove(
-        "active"
-    );
-
-    await loadSettings();
-
-    await startCamera();
-}
-
-async function loadCameraList() {
-
-    const devices =
-        await navigator
-            .mediaDevices
-            .enumerateDevices();
-
-    const videoDevices =
-        devices.filter(
-            device =>
-                device.kind ===
-                "videoinput"
-        );
-
-    cameraSelect.innerHTML = "";
-
-    videoDevices.forEach(
-        (device, index) => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                device.deviceId;
-
-            option.textContent =
-                device.label ||
-                `카메라 ${index + 1}`;
-
-            cameraSelect.appendChild(
-                option
-            );
-        }
-    );
-
-    if (
-        appSettings.selectedCameraId
-    ) {
-
-        cameraSelect.value =
-            appSettings.selectedCameraId;
-    }
-}
-
-async function startCamera() {
-
-    try {
-
-        reconnectMessage.style.display =
-            "none";
-
-        isCapturingBlocked = false;
-
-        if (currentStream) {
-
-            currentStream
-                .getTracks()
-                .forEach(track =>
-                    track.stop()
-                );
-        }
-
-        const constraints = {
-            video:
-                appSettings.selectedCameraId
-                    ? {
-                        deviceId: {
-                            exact:
-                                appSettings.selectedCameraId
-                        },
-
-                        width: {
-                            ideal: 1920
-                        },
-
-                        height: {
-                            ideal: 1080
-                        },
-
-                        aspectRatio: {
-                            ideal: 16 / 9
-                        }
-                    }
-                    : {
-                        width: {
-                            ideal: 1920
-                        },
-
-                        height: {
-                            ideal: 1080
-                        },
-
-                        aspectRatio: {
-                            ideal: 16 / 9
-                        }
-                    },
-
-            audio: false
-        };
-
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia(
-                    constraints
-                );
-
-        currentStream = stream;
-
-        const activeTrack =
-            stream.getVideoTracks()[0];
-
-        console.log(
-            "실제 연결 카메라:",
-            activeTrack.label
-        );
-
-        currentCameraDeviceId =
-            activeTrack?.getSettings?.().deviceId || "";
-
-        camera.srcObject = stream;
-
-        camera.onloadedmetadata = () => {
-
-            camera.play().catch(error => {
-
-                console.log(
-                    "카메라 재생 실패",
-                    error
-                );
-            });
-
-            applyDynamicCameraCrop();
-        };
-
-
-
-        window.addEventListener(
-            "resize",
-            applyDynamicCameraCrop
-        );
-
-        const videoTrack =
-            stream.getVideoTracks()[0];
-
-        if (videoTrack) {
-
-            videoTrack.addEventListener(
-                "ended",
-                () => {
-
-                    handleCameraDisconnect();
-                }
-            );
-        }
-
-        stopReconnectLoop();
-
-    } catch (error) {
-
-        console.error(
-            "카메라 시작 실패:",
-            error
-        );
-
-        /*
-            DSLR virtual webcam은
-            연결까지 시간이 오래 걸릴 수 있음
-        */
-
-        setTimeout(async () => {
-
-            try {
-
-                await startCamera();
-
-            } catch (retryError) {
-
-                console.log(
-                    "카메라 재시도 실패"
-                );
-            }
-
-        }, 2000);
-    }
-}
-
-function applyDynamicCameraCrop() {
-
-    if (
-        !camera.videoWidth ||
-        !camera.videoHeight
-    ) {
-        return;
-    }
-
-    const screenRatio =
-        window.innerWidth /
-        window.innerHeight;
-
-    const videoRatio =
-        camera.videoWidth /
-        camera.videoHeight;
-
-    camera.style.position =
-        "absolute";
-
-    camera.style.top =
-        "50%";
-
-    camera.style.left =
-        "50%";
-
-    /*
-        화면보다 카메라가 더 넓은 경우
-        =
-        높이 꽉 채우기
-    */
-    if (videoRatio > screenRatio) {
-
-        camera.style.width =
-            "auto";
-
-        camera.style.height =
-            "100vh";
-    }
-
-    /*
-        화면보다 카메라가 더 세로인 경우
-        =
-        폭 꽉 채우기
-    */
-    else {
-
-        camera.style.width =
-            "100vw";
-
-        camera.style.height =
-            "auto";
-    }
-
-    camera.style.objectFit =
-        "contain";
-
-    camera.style.transform =
-        `
-translate(-50%, -50%)
-scaleX(-1)
-`;
-}
-
-function handleCameraDisconnect() {
-
-    if (isReconnecting) {
-        return;
-    }
-
-    isCapturingBlocked = true;
-
-    camera.srcObject = null;
-
-    startReconnectLoop();
-}
-
-function startReconnectLoop() {
-
-    if (isReconnecting) {
-        return;
-    }
-
-    isReconnecting = true;
-
-    reconnectMessage.style.display =
-        "flex";
-
-    reconnectInterval =
-        setInterval(async () => {
-
-            try {
-
-                await loadCameraList();
-
-                const devices =
-                    await navigator
-                        .mediaDevices
-                        .enumerateDevices();
-
-                const hasCamera =
-                    devices.some(
-                        device =>
-                            device.kind ===
-                            "videoinput"
-                    );
-
-                if (!hasCamera) {
-
-                    console.log(
-                        "카메라 없음"
-                    );
-
-                    return;
-                }
-
-                await startCamera();
-
-            } catch (error) {
-
-                console.log(
-                    "재연결 실패"
-                );
-            }
-
-        }, 3000);
-}
-
-function stopReconnectLoop() {
-
-    reconnectMessage.style.display =
-        "none";
-
-    isReconnecting = false;
-
-    clearInterval(
-        reconnectInterval
-    );
-}
-
-function startSessionTimer() {
-
-    sessionTime =
-        appSettings.sessionMinutes * 60;
-
-    captureTime =
-        appSettings.captureSeconds;
-
-    updateSessionText();
-
-    clearInterval(
-        sessionInterval
-    );
-
-    sessionInterval =
-        setInterval(async () => {
-
-            sessionTime--;
-
-            captureTime--;
-
-            if (captureTime === 3) {
-
-                countdownAudio.currentTime = 0;
-
-                countdownAudio.play();
-            }
-
-            if (captureTime <= 0) {
-
-                captureTime =
-                    appSettings.captureSeconds;
-
-                triggerCapture();
-            }
-
-            updateSessionText();
-
-            if (sessionTime <= 0) {
-
-                clearInterval(
-                    sessionInterval
-                );
-
-                setTimeout(() => {
-
-                    resetToStart();
-
-                }, 2500);
-            }
-
-        }, 1000);
-}
-
-function updateSessionText() {
-
-    const min =
-        String(
-            Math.floor(
-                sessionTime / 60
-            )
-        ).padStart(2, "0");
-
-    const sec =
-        String(
-            sessionTime % 60
-        ).padStart(2, "0");
-
-    const capture =
-        String(
-            captureTime
-        ).padStart(2, "0");
-
-    sessionTimerText.innerText =
-        `${min}:${sec} / ${capture}`;
-}
-
-async function triggerCapture() {
-
-    if (isCapturingBlocked) {
-        return;
-    }
-
-    if (isCaptureProcessing) {
-        return;
-    }
-
-    isCaptureProcessing = true;
-
-    /*
-        flash 즉시 실행
-    */
-    camera.classList.remove(
-        "flash"
-    );
-
-    void camera.offsetWidth;
-
-    camera.classList.add(
-        "flash"
-    );
-
-    setTimeout(() => {
-
-        camera.classList.remove(
-            "flash"
-        );
-
-    }, 180);
-
-    try {
-
-        await capturePhoto();
-
-    } catch (error) {
-
-        console.log(
-            "triggerCapture 오류",
-            error
-        );
-
-    } finally {
-
-        isCaptureProcessing = false;
-    }
-}
-
-function dataURLToUint8Array(dataURL) {
-
-    const base64 =
-        dataURL.split(",")[1];
-
-    const binary =
-        atob(base64);
-
-    const length =
-        binary.length;
-
-    const bytes =
-        new Uint8Array(length);
-
-    for (
-        let i = 0;
-        i < length;
-        i++
-    ) {
-
-        bytes[i] =
-            binary.charCodeAt(i);
-    }
-
-    return bytes;
-}
-
-async function capturePhoto() {
-
-    try {
-
-        if (
-            !camera.videoWidth ||
-            !camera.videoHeight
-        ) {
-
-            return false;
-        }
-
-        /*
-    썸네일 전용
-*/
-        const previewCanvas =
-            document.createElement(
-                "canvas"
-            );
-
-        previewCanvas.width =
-            camera.videoWidth;
-
-        previewCanvas.height =
-            camera.videoHeight;
-
-        const previewCtx =
-            previewCanvas.getContext(
-                "2d"
-            );
-
-        previewCtx.translate(
-            previewCanvas.width,
-            0
-        );
-
-        previewCtx.scale(-1, 1);
-
-        previewCtx.drawImage(
-            camera,
-            0,
-            0,
-            previewCanvas.width,
-            previewCanvas.height
-        );
-
-        const previewData =
-            previewCanvas.toDataURL(
-                "image/jpeg",
-                0.7
-            );
-
-        /*
-            썸네일 표시
-        */
-        lastPhotoPreview.srcObject =
-            null;
-
-        lastPhotoPreview.classList.remove(
-            "show"
-        );
-
-        void lastPhotoPreview.offsetWidth;
-
-        lastPhotoPreview.src =
-            previewData;
-
-        lastPhotoPreview.classList.add(
-            "show"
-        );
-
-        clearTimeout(
-            thumbnailTimeout
-        );
-
-        thumbnailTimeout =
-            setTimeout(() => {
-
-                lastPhotoPreview.classList.remove(
-                    "show"
-                );
-
-            }, 3000);
-
-        /*
-            DSLR / 미러리스 여부 판단
-        */
-        const videoTrack =
-            currentStream
-                ?.getVideoTracks?.()[0];
-
-        const trackLabel =
-            videoTrack
-                ?.label
-                ?.toLowerCase?.() || "";
-
-        const selectedText =
-            cameraSelect.options[
-                cameraSelect.selectedIndex
-            ]?.textContent?.toLowerCase?.() || "";
-
-        const cameraName =
-            `${trackLabel} ${selectedText}`;
-
-        const currentCameraText =
-            cameraSelect.options[
-                cameraSelect.selectedIndex
-            ]?.textContent
-                ?.toLowerCase?.() || "";
-
-        const isDSLR =
-            currentCameraText.includes("nikon") ||
-            currentCameraText.includes("canon") ||
-            currentCameraText.includes("sony") ||
-            currentCameraText.includes("fujifilm") ||
-            currentCameraText.includes("lumix") ||
-            currentCameraText.includes("eos") ||
-            currentCameraText.includes("alpha") ||
-            currentCameraText.includes("webcam utility");
-
-        /*
-            DSLR / 미러리스
-            =
-            원본 저장
-        */
-        if (isDSLR) {
-
-            try {
-
-                window.electronAPI
-                    .captureDSLR()
-                    .then(result => {                        
-
-                    })
-                    .catch(error => {
-
-                        console.log(
-                            "DSLR 저장 오류",
-                            error
-                        );
-
-                    });
-
-                
-
-            } catch (error) {
-
-                console.log(
-                    "DSLR 저장 오류",
-                    error
-                );
-            }
-        }
-
-        /*
-            웹캠 / 내장캠
-            =
-            최대 해상도 저장
-        */
-        else {
-
-            const originalCanvas =
-                document.createElement(
-                    "canvas"
-                );
-
-            originalCanvas.width =
-                camera.videoWidth;
-
-            originalCanvas.height =
-                camera.videoHeight;
-
-            const originalCtx =
-                originalCanvas.getContext(
-                    "2d"
-                );
-
-            originalCtx.translate(
-                originalCanvas.width,
-                0
-            );
-
-            originalCtx.scale(-1, 1);
-
-            originalCtx.drawImage(
-                camera,
-                0,
-                0,
-                originalCanvas.width,
-                originalCanvas.height
-            );
-
-            const originalData =
-                originalCanvas.toDataURL(
-                    "image/png"
-                );
-
-            const buffer =
-                dataURLToUint8Array(
-                    originalData
-                );
-
-            const fileName =
-                `webcam_${Date.now()}.png`;
-
-            await window.electronAPI
-                .savePhoto({
-                    fileName,
-                    buffer
-                });
-        }
-
-        return true;
-
-    } catch (error) {
-
-        console.log(
-            "DSLR 촬영 오류",
-            error
-        );
-
-        return false;
-    }
-}
-
 function resetToStart() {
 
-    clearInterval(
-        sessionInterval
-    );
+    stopSessionTimer();
 
     stopReconnectLoop();
 
-    countdownAudio.pause();
-
-    countdownAudio.currentTime = 0;
+    const currentStream =
+        getCurrentStream();
 
     if (currentStream) {
 
@@ -1176,22 +358,7 @@ closeAdminBtn.addEventListener(
 
 selectPathBtn.addEventListener(
     "click",
-    async () => {
-
-        const selectedPath =
-            await window.electronAPI
-                .selectSavePath();
-
-        if (!selectedPath) {
-            return;
-        }
-
-        appSettings.savePath =
-            selectedPath;
-
-        currentSavePath.innerText =
-            selectedPath;
-    }
+    selectSavePath
 );
 
 if (navigator.mediaDevices) {
@@ -1225,7 +392,7 @@ if (navigator.mediaDevices) {
                     }
 
                     if (
-                        isReconnecting
+                        getIsReconnecting()
                     ) {
 
                         await startCamera();
@@ -1270,7 +437,7 @@ confirmEndBtn.addEventListener(
         );
 
         /*
-            5분 잠금
+            3분 잠금
         */
         startButtonLockUntil =
             Date.now() +

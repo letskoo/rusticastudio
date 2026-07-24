@@ -228,6 +228,11 @@ function createWindow() {
         "src/index.html"
     );
 
+    // 앱 실행시 콘솔 (F12) 창이 자동으로 열리도록 설정
+    mainWindow.webContents.openDevTools({
+        mode: "detach"
+    });
+
     mainWindow.setMenuBarVisibility(
         false
     );
