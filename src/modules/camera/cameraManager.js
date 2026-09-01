@@ -1,3 +1,8 @@
+import {
+    startDSLRLiveView
+} from "../../services/camera/liveViewService.js";
+
+
 let deps;
 
 let currentStream = null;
@@ -87,6 +92,32 @@ export async function startCamera() {
 
         const appSettings =
             deps.getAppSettings();
+
+        if (
+            appSettings.captureMode ===
+            "digicam"
+        ) {
+            currentStream = null;
+
+            deps.camera.srcObject = null;
+            deps.camera.style.display =
+                "none";
+
+            deps.dslrLiveView.style.display =
+                "block";
+
+            startDSLRLiveView(
+                deps.dslrLiveView
+            );
+
+            console.log(
+                "DSLR Live View 시작"
+            );
+
+            stopReconnectLoop();
+
+            return;
+        }
 
         const constraints = {
             video:

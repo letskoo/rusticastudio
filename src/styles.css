@@ -110,6 +110,25 @@ body {
     background: black;
 }
 
+#dslrLiveView {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 100vw;
+    height: 100vh;
+
+    object-fit: contain;
+
+    transform:
+        translate(-50%, -50%);
+
+    background: black;
+
+    z-index: 1;
+}
+
 /*
     세로 프레임 오버레이
 */
@@ -154,25 +173,6 @@ body {
 
     text-shadow:
         0 0 10px rgba(0, 0, 0, 0.7);
-}
-
-.flash {
-    animation: flashEffect 0.2s;
-}
-
-@keyframes flashEffect {
-
-    0% {
-        filter: brightness(1);
-    }
-
-    50% {
-        filter: brightness(2);
-    }
-
-    100% {
-        filter: brightness(1);
-    }
 }
 
 #last-photo-preview {
@@ -626,7 +626,7 @@ body {
 #confirm-end-btn,
 #cancel-end-btn {
 
-     flex: 1;
+    flex: 1;
 
     height: 46px;
 
@@ -665,4 +665,429 @@ body {
 #cancel-end-btn:hover {
 
     background: #d1d5db;
+}
+
+/* =========================================================
+   ALBUM
+========================================================= */
+
+#album-page {
+    width: 100%;
+    height: 100%;
+
+    flex-direction: column;
+
+    justify-content: flex-start;
+    align-items: stretch;
+
+    overflow: hidden;
+
+    background: #ffffff;
+}
+
+
+/* ---------------------------------------------------------
+   Header
+--------------------------------------------------------- */
+
+#album-header {
+    flex: 0 0 auto;
+
+    width: 100%;
+
+    min-height: 76px;
+
+    padding:
+        0 clamp(24px, 4vw, 64px);
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    background: #000000;
+
+    z-index: 10;
+}
+
+
+#album-selected-count {
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 10px;
+
+    color: #ffffff;
+
+    white-space: nowrap;
+}
+
+
+.album-selected-label {
+    font-size:
+        clamp(15px, 1.3vw, 20px);
+
+    font-weight: 500;
+}
+
+
+.album-selected-number {
+    font-size:
+        clamp(24px, 2.2vw, 34px);
+
+    font-weight: 800;
+
+    line-height: 1;
+}
+
+
+#album-timer {
+    font-size:
+        clamp(24px, 2.2vw, 34px);
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    color: #ffffff;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+
+/* ---------------------------------------------------------
+   Content
+--------------------------------------------------------- */
+
+#album-content {
+    position: relative;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding:
+        clamp(24px, 3vw, 48px) clamp(24px, 5vw, 80px) 130px;
+
+    background: #ffffff;
+}
+
+
+/* ---------------------------------------------------------
+   Gallery Grid
+--------------------------------------------------------- */
+
+#album-grid {
+    width: 100%;
+
+    max-width: 1500px;
+
+    margin:
+        0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5,
+            minmax(0, 1fr));
+
+    gap:
+        clamp(8px, 1vw, 16px);
+}
+
+
+/* ---------------------------------------------------------
+   Image Item
+--------------------------------------------------------- */
+
+.album-image-item {
+    position: relative;
+
+    width: 100%;
+
+    /*
+        Instagram Portrait
+        width : height = 4 : 5
+    */
+    aspect-ratio: 4 / 5;
+
+    overflow: hidden;
+
+    background: #f3f4f6;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+}
+
+
+.album-image {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    user-select: none;
+
+    -webkit-user-drag: none;
+}
+
+
+/* ---------------------------------------------------------
+   Favorite
+--------------------------------------------------------- */
+
+.album-favorite-btn {
+    position: absolute;
+
+    top: 8px;
+    left: 8px;
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    border: none;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-size: 36px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    z-index: 5;
+
+    text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+
+.album-favorite-btn.selected {
+    color: #ffe600;
+}
+
+
+/* ---------------------------------------------------------
+   Complete Button
+--------------------------------------------------------- */
+
+#album-footer {
+    position: absolute;
+
+    left: 50%;
+
+    bottom:
+        clamp(28px, 5vh, 60px);
+
+    transform:
+        translateX(-50%);
+
+    z-index: 20;
+
+    pointer-events: none;
+}
+
+
+#album-complete-btn {
+    width:
+        clamp(180px,
+            12vw,
+            230px);
+
+    height:
+        clamp(52px,
+            6vh,
+            64px);
+
+    padding:
+        0 28px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+    font-size:
+        clamp(17px,
+            1.25vw,
+            21px);
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    pointer-events: auto;
+
+    box-shadow:
+        0 5px 16px rgba(0, 0, 0, 0.14);
+
+    transition:
+        transform 0.15s,
+        background 0.15s;
+}
+
+
+#album-complete-btn:hover {
+    background: #1d4ed8;
+}
+
+
+#album-complete-btn:active {
+    transform:
+        scale(0.97);
+}
+
+
+/* ---------------------------------------------------------
+   Vertical / Narrow Desktop
+--------------------------------------------------------- */
+
+@media (max-aspect-ratio: 4 / 5) {
+
+    #album-grid {
+        grid-template-columns:
+            repeat(3,
+                minmax(0, 1fr));
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   Narrow Width
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+
+    #album-header {
+        min-height: 68px;
+
+        padding:
+            0 24px;
+    }
+
+
+    #album-content {
+        padding:
+            24px 24px 120px;
+    }
+
+
+    #album-grid {
+        grid-template-columns:
+            repeat(3,
+                minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .album-favorite-btn {
+        width: 36px;
+        height: 36px;
+
+        font-size: 31px;
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   Very Narrow Portrait
+--------------------------------------------------------- */
+
+@media (max-width: 600px) {
+
+    #album-grid {
+        grid-template-columns:
+            repeat(2,
+                minmax(0, 1fr));
+    }
+
+
+    #album-content {
+        padding:
+            18px 16px 110px;
+    }
+
+
+    #album-complete-btn {
+        width: 160px;
+
+        height: 52px;
+
+        font-size: 17px;
+    }
+
+}
+
+/* =========================================================
+   CAPTURE FLASH
+========================================================= */
+
+#capture-flash {
+
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    background: #ffffff;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: 2147483647;
+
+    transition:
+        opacity 180ms ease-out;
+}
+
+
+#capture-flash.show {
+
+    opacity: 1;
+
+    transition: none;
+}
+
+
+@keyframes captureScreenFlash {
+
+    0% {
+        opacity: 0;
+    }
+
+    18% {
+        opacity: 0.95;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }

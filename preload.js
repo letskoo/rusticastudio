@@ -34,16 +34,56 @@ contextBridge.exposeInMainWorld(
         "select-save-path"
       ),
 
+    getSessionImages: (
+      sessionPath
+    ) =>
+      ipcRenderer.invoke(
+        "get-session-images",
+        sessionPath
+      ),
+
+    copySelectedImages: (
+      data
+    ) =>
+      ipcRenderer.invoke(
+        "copy-selected-images",
+        data
+      ),
+
+    completeSession: (
+      sessionPath
+    ) =>
+      ipcRenderer.invoke(
+        "complete-session",
+        sessionPath
+      ),
+
     onGlobalCapture: (callback) =>
       ipcRenderer.on(
         "global-trigger-capture",
         callback
       )
-      ,
+    ,
 
-captureDSLR: () =>
-    ipcRenderer.invoke(
+    captureDSLR: () =>
+      ipcRenderer.invoke(
         "capture-dslr"
-    )
+      ),
+
+    onCaptureCompleted: (
+      callback
+    ) =>
+      ipcRenderer.on(
+        "capture-completed",
+        (
+          event,
+          imagePath
+        ) => {
+
+          callback(
+            imagePath
+          );
+        }
+      )
   }
 );

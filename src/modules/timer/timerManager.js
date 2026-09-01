@@ -22,6 +22,10 @@ export function initTimerManager(
 
 export function startSessionTimer() {
 
+    countdownAudio.pause();
+
+    countdownAudio.currentTime = 0;
+
     const appSettings =
         deps.getAppSettings();
 
@@ -38,33 +42,49 @@ export function startSessionTimer() {
     );
 
     sessionInterval =
-        setInterval(() => {
+        setInterval(async () => {
 
             sessionTime--;
 
             captureTime--;
 
-            if (captureTime === 3) {
+            if (
+                captureTime ===
+                Math.min(
+                    3,
+                    appSettings.captureSeconds
+                )
+            ) {
+
+                countdownAudio.pause();
 
                 countdownAudio.currentTime = 0;
 
-                countdownAudio
-                    .play()
-                    .catch(error => {
+                try {
 
-                        console.log(
-                            "카운트다운 재생 오류",
-                            error
-                        );
-                    });
+                    await countdownAudio.play();
+
+                } catch (error) {
+
+                    console.log(
+                        "카운트다운 재생 오류",
+                        error
+                    );
+                }
             }
 
             if (captureTime <= 0) {
 
-                captureTime =
-                    appSettings.captureSeconds;
+                /*
+                    셔터 효과음이 재생되는
+                    마지막 1초 동안
+                    실제 촬영
+                */
 
                 deps.triggerCapture();
+
+                captureTime =
+                    appSettings.captureSeconds;
             }
 
             updateSessionText();
@@ -79,7 +99,7 @@ export function startSessionTimer() {
 
                 setTimeout(() => {
 
-                    deps.resetToStart();
+                    deps.onSessionTimeExpired();
 
                 }, 2500);
             }

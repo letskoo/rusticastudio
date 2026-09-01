@@ -4,6 +4,7 @@ import {
     cameraPage,
     startBtn,
     camera,
+    dslrLiveView,
     sessionTimerText,
     lastPhotoPreview,
     reconnectMessage,
@@ -14,6 +15,10 @@ import {
     sessionMinInput,
     captureSecInput,
     deleteMinInput,
+    albumEnabledInput,
+    albumTimeoutMinInput,
+    restartDelayMinInput,
+    captureModeSelect,
     autoLaunchInput,
     cameraSelect,
     selectPathBtn,
@@ -21,7 +26,13 @@ import {
     endSessionBtn,
     endConfirmModal,
     confirmEndBtn,
-    cancelEndBtn
+    cancelEndBtn,
+    albumPage,
+    albumSelectedCount,
+    albumTimer,
+    albumContent,
+    albumGrid,
+    albumCompleteBtn
 } from "./modules/ui/dom.js";
 
 import {
@@ -37,7 +48,8 @@ import {
 
 import {
     initCaptureManager,
-    triggerCapture
+    triggerCapture,
+    getIsCaptureProcessing
 } from "./modules/capture/captureManager.js";
 
 import {
@@ -54,7 +66,35 @@ import {
     getAppSettings
 } from "./modules/settings/settingsManager.js";
 
-let startButtonLockUntil = 0;
+import {
+    initSession,
+    startSession,
+    requestSessionEnd,
+    completeSession,
+    canStartSession
+} from "./features/session/session.js";
+
+import {
+    initAlbum,
+    openAlbum,
+    completeAlbum,
+    toggleFavorite,
+    isFavorite,
+    getSelectedImagePaths
+} from "./features/album/album.js";
+
+import {
+    initAlbumView,
+    showAlbumPage,
+    hideAlbumPage,
+    renderAlbumImages,
+    updateAlbumTimer,
+    clearAlbumView
+} from "./ui/album/albumView.js";
+
+import {
+    stopDSLRLiveView
+} from "./services/camera/liveViewService.js";
 
 initCaptureManager({
 
@@ -62,9 +102,9 @@ initCaptureManager({
 
     lastPhotoPreview,
 
-    cameraSelect,
+    getIsCapturingBlocked,
 
-    getIsCapturingBlocked
+    getAppSettings
 
 });
 
@@ -76,7 +116,8 @@ initTimerManager({
 
     triggerCapture,
 
-    resetToStart
+    onSessionTimeExpired:
+        requestSessionEnd
 
 });
 
@@ -87,6 +128,14 @@ initSettingsManager({
     captureSecInput,
 
     deleteMinInput,
+
+    albumEnabledInput,
+
+    albumTimeoutMinInput,
+
+    restartDelayMinInput,
+
+    captureModeSelect,
 
     autoLaunchInput,
 
@@ -102,11 +151,127 @@ initCameraManager({
 
     camera,
 
+    dslrLiveView,
+
     cameraSelect,
 
     reconnectMessage,
 
     getAppSettings
+
+});
+
+initAlbumView({
+
+    cameraPage,
+
+    albumPage,
+
+    albumSelectedCount,
+
+    albumTimer,
+
+    albumGrid,
+
+    onToggleFavorite:
+        toggleFavorite,
+
+    isFavorite,
+
+    getSelectedImagePaths
+
+});
+
+initAlbum({
+
+    getSessionImages:
+        sessionPath =>
+            window.electronAPI
+                .getSessionImages(
+                    sessionPath
+                ),
+
+    copySelectedImages:
+        data =>
+            window.electronAPI
+                .copySelectedImages(
+                    data
+                ),
+
+    getAppSettings,
+
+    onAlbumOpened:
+        imagePaths => {
+
+            showAlbumPage();
+
+            renderAlbumImages(
+                imagePaths
+            );
+        },
+
+    onAlbumTimerChange:
+        remainingSeconds => {
+
+            updateAlbumTimer(
+                remainingSeconds
+            );
+        },
+
+    onAlbumCompleted:
+        result => {
+
+            console.log(
+                "ALBUM: 세션 완료",
+                result
+            );
+
+            hideAlbumPage();
+
+            clearAlbumView();
+
+            completeSession();
+        }
+
+});
+
+initSession({
+
+    createSessionFolder:
+        () =>
+            window.electronAPI
+                .createSessionFolder(),
+
+    startCamera,
+
+    startSessionTimer,
+
+    stopSessionTimer,
+
+    getAppSettings,
+
+    resetToStart,
+
+    setStartButtonLocked:
+        locked => {
+
+            startBtn.classList.toggle(
+                "disabled",
+                locked
+            );
+
+        },
+
+    openAlbum,
+
+    getIsCaptureProcessing,
+
+    notifySessionCompleted:
+        sessionPath =>
+            window.electronAPI
+                .completeSession(
+                    sessionPath
+                )
 
 });
 
@@ -192,24 +357,10 @@ startBtn.addEventListener(
     "click",
     async () => {
 
-        /*
-            시작 버튼 잠금
-        */
-        if (
-            Date.now() <
-            startButtonLockUntil
-        ) {
-
-            startBtn.classList.add(
-                "disabled"
-            );
+        if (!canStartSession()) {
 
             return;
         }
-
-        startBtn.classList.remove(
-            "disabled"
-        );
 
         startPage.classList.remove(
             "active"
@@ -229,11 +380,7 @@ startBtn.addEventListener(
                 "active"
             );
 
-            await window.electronAPI.createSessionFolder();
-
-            await startCamera();
-
-            startSessionTimer();
+            await startSession();
 
         }, 3000);
     }
@@ -244,6 +391,8 @@ function resetToStart() {
     stopSessionTimer();
 
     stopReconnectLoop();
+
+    stopDSLRLiveView();
 
     const currentStream =
         getCurrentStream();
@@ -272,11 +421,21 @@ document.addEventListener(
     "keydown",
     (e) => {
 
+        console.log(
+            "KEYDOWN:",
+            e.code
+        );
+
         if (
             e.code === "Space" ||
             e.code === "Enter" ||
             e.code === "NumpadEnter"
         ) {
+
+            console.log(
+                "CAPTURE KEY 감지:",
+                e.code
+            );
 
             triggerCapture();
         }
@@ -436,25 +595,16 @@ confirmEndBtn.addEventListener(
             "show"
         );
 
-        /*
-            3분 잠금
-        */
-        startButtonLockUntil =
-            Date.now() +
-            (3 * 60 * 1000);
+        requestSessionEnd();
+    }
+);
 
-        startBtn.classList.add(
-            "disabled"
+albumCompleteBtn.addEventListener(
+    "click",
+    () => {
+
+        completeAlbum(
+            "MANUAL"
         );
-
-        setTimeout(() => {
-
-            startBtn.classList.remove(
-                "disabled"
-            );
-
-        }, 3 * 60 * 1000);
-
-        resetToStart();
     }
 );

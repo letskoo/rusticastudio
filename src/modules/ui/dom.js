@@ -23,6 +23,11 @@ export const camera =
         "camera"
     );
 
+export const dslrLiveView =
+    document.getElementById(
+        "dslrLiveView"
+    );
+
 export const sessionTimerText =
     document.getElementById(
         "session-timer"
@@ -73,10 +78,38 @@ export const deleteMinInput =
         "delete-min-input"
     );
 
+
+export const albumEnabledInput =
+    document.getElementById(
+        "album-enabled-input"
+    );
+
+
+export const albumTimeoutMinInput =
+    document.getElementById(
+        "album-timeout-min-input"
+    );
+
+
+export const restartDelayMinInput =
+    document.getElementById(
+        "restart-delay-min-input"
+    );
+
+
+
+export const captureModeSelect =
+    document.getElementById(
+        "capture-mode-select"
+    );
+
+
+
 export const autoLaunchInput =
     document.getElementById(
         "auto-launch-input"
     );
+
 
 export const cameraSelect =
     document.getElementById(
@@ -111,4 +144,39 @@ export const confirmEndBtn =
 export const cancelEndBtn =
     document.getElementById(
         "cancel-end-btn"
+    );
+
+export const albumPage =
+    document.getElementById(
+        "album-page"
+    );
+
+
+export const albumSelectedCount =
+    document.getElementById(
+        "album-selected-count"
+    );
+
+
+export const albumTimer =
+    document.getElementById(
+        "album-timer"
+    );
+
+
+export const albumContent =
+    document.getElementById(
+        "album-content"
+    );
+
+
+export const albumGrid =
+    document.getElementById(
+        "album-grid"
+    );
+
+
+export const albumCompleteBtn =
+    document.getElementById(
+        "album-complete-btn"
     );

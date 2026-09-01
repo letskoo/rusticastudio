@@ -40,6 +40,8 @@
 
             <video id="camera" autoplay playsinline></video>
 
+            <img id="dslrLiveView" alt="DSLR Live View" style="display: none;" />
+
             <img src="../assets/ui/page3.png" class="overlay" />
 
             <div id="session-timer">
@@ -83,6 +85,38 @@
 
     </div>
 
+    <!-- 앨범 페이지 -->
+    <div id="album-page" class="page">
+
+        <div id="album-header">
+
+            <div id="album-selected-count">
+                선택한 사진 <strong>0장</strong>
+            </div>
+
+            <div id="album-timer">
+                05:00
+            </div>
+
+        </div>
+
+        <div id="album-content">
+
+            <div id="album-grid">
+            </div>
+
+        </div>
+
+        <div id="album-footer">
+
+            <button id="album-complete-btn">
+                선택 완료
+            </button>
+
+        </div>
+
+    </div>
+
     <!-- 관리자 모드 -->
     <div id="admin-modal">
 
@@ -111,6 +145,54 @@
                 <span>자동 삭제 시간 (분)</span>
 
                 <input id="delete-min-input" type="number" min="1" value="60" />
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>앨범 보기</span>
+
+                <label class="toggle-switch">
+
+                    <input id="album-enabled-input" type="checkbox" />
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>사진 선택 제한시간 (분)</span>
+
+                <input id="album-timeout-min-input" type="number" min="1" value="5" />
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>재시작 제한시간 (분)</span>
+
+                <input id="restart-delay-min-input" type="number" min="1" value="3" />
+
+            </div>
+
+            <div class="admin-item">
+
+                <span>촬영 방식</span>
+
+                <select id="capture-mode-select">
+
+                    <option value="webcam">
+                        웹캠
+                    </option>
+
+                    <option value="digicam">
+                        digiCamControl
+                    </option>
+
+                </select>
 
             </div>
 
@@ -184,17 +266,8 @@
 
     </div>
 
-    <script src="./renderer.js"></script>
+    <script type="module" src="./renderer.js"></script>
 
 </body>
 
 </html>
-
-<script>
-console.log("index html loaded");
-</script>
-
-<script type="module">
-console.log("module loaded");
-import "./renderer.js";
-</script>
