@@ -119,6 +119,12 @@ export async function startCamera() {
             return;
         }
 
+        deps.dslrLiveView.style.display =
+            "none";
+
+        deps.camera.style.display =
+            "block";
+
         const constraints = {
             video:
                 appSettings.selectedCameraId
