@@ -209,13 +209,55 @@ digiCamControl 실행,
 프로세스 상태 확인 등
 
 운영체제 수준의 처리는
+
 DIGICAM_CONTROL Service 내부에서 처리한다.
 
+RusticaStudio 시작 시
+
+digiCamControl Process Service가
+
+digiCamControl 실행을 요청한다.
+
+digiCamControl 실행 후에는
+
+WebServer가 실제 요청을 받을 수 있는 상태가 될 때까지
+
+준비 상태를 확인한다.
+
+WebServer 준비가 확인되면
+
+digiCamControl에
+
+Live View 시작을 요청한다.
+
+Live View 시작 명령이
+
+성공적으로 전달되었다는 사실만으로
+
+Live View READY로 판단하지 않는다.
+
+RusticaStudio는
+
+`/liveview.jpg`에서
+
+실제 이미지 데이터가 전달되는 것을 확인한 뒤
+
+Live View가 준비된 것으로 판단한다.
+
+실제 이미지가 확인되지 않으면
+
+Live View 재시작을 시도한 뒤
+
+다시 실제 이미지 상태를 확인한다.
+
 Renderer Feature가
+
 직접 외부 프로그램을 실행하지 않는다.
 
 필요한 통신은
+
 Electron의 Main Process와
+
 안전한 IPC 경계를 통해 수행한다.
 
 ---

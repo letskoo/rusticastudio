@@ -49,6 +49,13 @@ const {
     "./electron/services/camera/digiCamControlService"
 );
 
+const {
+    initDigiCamControlProcessService,
+    startDigiCamControl
+} = require(
+    "./electron/services/camera/digiCamControlProcessService"
+);
+
 let mainWindow;
 
 let currentSessionFolder = null;
@@ -144,6 +151,35 @@ function writeLog(message) {
 
 initDigiCamControlService({
     log: writeLog
+});
+
+initDigiCamControlProcessService({
+
+    log:
+        writeLog,
+
+    liveViewReady:
+        () => {
+
+            writeLog(
+                "DSLR Live View 준비 완료"
+            );
+
+            if (
+                !mainWindow ||
+                mainWindow.isDestroyed()
+            ) {
+                return;
+            }
+
+            mainWindow.show();
+
+            mainWindow.focus();
+
+            writeLog(
+                "RusticaStudio 전면 복귀 완료"
+            );
+        }
 });
 
 initSettingsStorageService({
@@ -869,6 +905,8 @@ app.whenReady().then(() => {
     );
 
     loadSettings();
+
+    startDigiCamControl();
 
     ensureFolders();
 
