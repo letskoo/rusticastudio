@@ -314,6 +314,24 @@ body {
     background: #ffffff;
 }
 
+.store-name-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 200px;
+}
+
+.store-name-field input {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#store-name-help {
+    color: #6b7280;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 #current-save-path {
     width: 280px;
 
@@ -1091,4 +1109,80 @@ body {
     100% {
         opacity: 0;
     }
+}
+
+/* =========================
+   Album Original Preview
+========================= */
+
+#album-preview-modal {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.95);
+    align-items: center;
+    justify-content: center;
+}
+
+#album-preview-modal.active {
+    display: flex;
+}
+
+#album-preview-image {
+    display: block;
+    max-width: 94%;
+    max-height: 94%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+#album-preview-close {
+    position: absolute;
+    top: 24px;
+    right: 30px;
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 36px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+#album-preview-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* =========================
+   Album Preview Favorite
+========================= */
+
+#album-preview-favorite {
+    position: absolute;
+    top: 24px;
+    right: 102px;
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.65);
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 34px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+#album-preview-favorite.selected {
+    color: #FFD700;
+    background: rgba(0, 0, 0, 0.85);
+}
+
+#album-preview-favorite:hover {
+    background: rgba(0, 0, 0, 0.85);
 }

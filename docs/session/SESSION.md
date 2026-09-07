@@ -1,4 +1,3 @@
-@'
 # Session
 
 ## Purpose
@@ -74,30 +73,61 @@ SESSION은
 
 새로운 Session이 시작되면
 
+설정된 매장명과
+
 촬영 시작 시간을 기준으로
+
 새로운 Session Folder를 생성한다.
 
 기본 형식:
 
-YYYY-MM-DD-amHH-mm
+매장명_YYYY-MM-DD-amHH-mm
 
 또는
 
-YYYY-MM-DD-pmHH-mm
+매장명_YYYY-MM-DD-pmHH-mm
 
 예:
 
-2026-08-12-pm03-25
+대전둔산점_2026-09-07-pm01-38
 
 최종 경로 예:
 
-C:\Users\User\Downloads\2026-08-12-pm03-25
+C:\Users\User\Downloads\대전둔산점_2026-09-07-pm01-38
+
+매장명이 설정되지 않았거나
+
+유효한 입력값이 없는 경우
+
+기본 매장명 Rustica를 사용한다.
+
+매장명에는
+
+영문, 한글 완성형, 숫자만 허용한다.
+
+공백, 특수문자, 기호는 허용하지 않는다.
+
+매장명은 설정 저장 이후
+
+새로 생성되는 Session Folder부터 적용한다.
+
+이미 생성된 Session Folder는
+
+이름을 변경하거나 이동하지 않는다.
 
 Session Folder의 이름은
+
 Session 시작 시 한 번 결정한다.
 
 Session 진행 중에는
-폴더 이름을 변경하지 않는다.
+
+설정의 매장명이 변경되어도
+
+현재 Session Folder 이름을 변경하지 않는다.
+
+기존 날짜·시간 형식과
+
+고유 폴더 생성 정책은 유지한다.
 
 ---
 
@@ -524,6 +554,3 @@ DIGICAM_CONTROL,
 FILE_WATCH
 
 문서에 중복 작성하지 않는다.
-'@ | Set-Content `
-"C:\projects\rusticastudio\docs\session\SESSION.md" `
--Encoding UTF8

@@ -7,7 +7,8 @@ const DEFAULT_SETTINGS = {
     restartDelayMinutes: 3,
     selectedCameraId: "",
     autoLaunch: false,
-    savePath: ""
+    savePath: "",
+    storeName: "Rustica"
 };
 
 let appSettings = {

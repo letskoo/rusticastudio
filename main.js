@@ -85,7 +85,9 @@ let appSettings = {
 
     albumEnabled: false,
     albumTimeoutMinutes: 5,
-    restartDelayMinutes: 3
+    restartDelayMinutes: 3,
+
+    storeName: "Rustica"
 };
 
 const settingsPath = path.join(
@@ -213,7 +215,7 @@ const DSLR_WATCH_FOLDER =
     );
 
 const SESSION_FOLDER_REGEX =
-    /^\d{4}-\d{2}-\d{2}-(am|pm)\d{2}-\d{2}$/;
+    /^(?:[A-Za-z0-9가-힣]+_)?\d{4}-\d{2}-\d{2}-(am|pm)\d{2}-\d{2}$/;
 
 function loadSettings() {
 
@@ -770,8 +772,15 @@ ipcMain.handle(
         const formattedHour =
             String(hour).padStart(2, "0");
 
+        const storeName =
+            /^[A-Za-z0-9가-힣]+$/.test(
+                appSettings.storeName
+            )
+                ? appSettings.storeName
+                : "Rustica";
+
         const folderName =
-            `${year}-${month}-${day}-${ampm}${formattedHour}-${minute}`;
+            `${storeName}_${year}-${month}-${day}-${ampm}${formattedHour}-${minute}`;
 
         currentSessionFolder =
             path.join(

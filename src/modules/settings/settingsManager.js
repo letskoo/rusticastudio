@@ -12,7 +12,8 @@ let appSettings = {
 
     selectedCameraId: "",
     autoLaunch: false,
-    savePath: ""
+    savePath: "",
+    storeName: "Rustica"
 };
 
 export function initSettingsManager(
@@ -20,6 +21,25 @@ export function initSettingsManager(
 ) {
 
     deps = dependencies;
+
+    deps.storeNameInput.addEventListener(
+        "input",
+        () => {
+
+            const input =
+                deps.storeNameInput;
+
+            const filtered =
+                input.value.replace(
+                    /[^A-Za-z0-9가-힣]/g,
+                    ""
+                );
+
+            if (input.value !== filtered) {
+                input.value = filtered;
+            }
+        }
+    );
 }
 
 export async function loadSettings() {
@@ -60,10 +80,25 @@ export async function loadSettings() {
         appSettings.savePath ||
         "기본 Downloads";
 
+    deps.storeNameInput.value =
+        appSettings.storeName ||
+        "Rustica";
+
     return appSettings;
 }
 
 export async function saveSettings() {
+
+    const storeName =
+        deps.storeNameInput.value === ""
+            ? "Rustica"
+            : deps.storeNameInput.value;
+
+    if (!/^[A-Za-z0-9가-힣]+$/.test(storeName)) {
+        alert("매장명은 영문, 한글, 숫자만 입력 가능합니다.");
+        deps.storeNameInput.focus();
+        return;
+    }
 
     const settings = {
 
@@ -106,7 +141,10 @@ export async function saveSettings() {
             deps.autoLaunchInput.checked,
 
         savePath:
-            appSettings.savePath || ""
+            appSettings.savePath || "",
+
+        storeName:
+            storeName
     };
 
     appSettings =

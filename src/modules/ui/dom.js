@@ -112,8 +112,19 @@ export const autoLaunchInput =
 
 
 export const cameraSelect =
+
     document.getElementById(
+
         "camera-select"
+
+    );
+
+export const storeNameInput =
+
+    document.getElementById(
+
+        "store-name-input"
+
     );
 
 export const selectPathBtn =

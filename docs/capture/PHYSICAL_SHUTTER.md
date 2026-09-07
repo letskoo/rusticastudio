@@ -1,304 +1,214 @@
-@'
 # Physical Shutter Capture
 
 ## Purpose
 
-PHYSICAL_SHUTTER는
-사용자가 Nikon 카메라의
-물리 셔터 버튼을 눌러 촬영하는 기능이다.
+PHYSICAL_SHUTTER는 사용자가 카메라의 물리 셔터 버튼을 눌러 촬영하는 동작과, RusticaStudio가 실제 촬영 파일을 처리하는 정책을 정의한다.
 
-RusticaStudio는
-물리 셔터의 촬영 시점을 결정하지 않는다.
+RusticaStudio는 물리 셔터의 촬영 시점을 결정하지 않는다. 사용자가 원하는 순간에 직접 촬영한다.
 
-사용자가 원하는 순간에
-직접 촬영한다.
+현재 구현에서는 물리 셔터 전용 촬영 모드를 별도로 만들지 않는다. 기존 파일 감지 기반 촬영 완료 파이프라인을 재사용한다.
+
+---
+
+## Current Implementation
+
+현재 물리 셔터 촬영은 별도의 PHYSICAL_SHUTTER 실행 모드 없이 동작한다.
+
+카메라에서 실제 사진이 촬영되어 PC의 감시 폴더에 도착하면, 기존 FILE_WATCH가 파일을 감지하고 촬영 완료 파이프라인으로 전달한다.
+
+물리 셔터 촬영을 위해 별도의 카운트다운, 촬영 완료 처리, 썸네일 생성, 갤러리 저장 로직을 구현하지 않는다.
 
 ---
 
 ## Responsibility
 
-PHYSICAL_SHUTTER가 담당하는 것은 다음과 같다.
+PHYSICAL_SHUTTER 문서가 정의하는 것은 다음과 같다.
 
-- 물리 셔터 촬영 모드 활성 상태 관리
-- 실제 촬영 완료 신호 대기
-- 촬영 완료 결과 전달
-- 다음 물리 셔터 촬영 대기
+* 물리 셔터 촬영의 입력 경계
+* 실제 파일 도착을 기준으로 한 완료 판단
+* 기존 촬영 완료 파이프라인 재사용 정책
+* 자동 타이머와 물리 셔터의 현재 동작 관계
+* 리모콘 촬영의 검증 범위
 
-PHYSICAL_SHUTTER는 다음을 담당하지 않는다.
+PHYSICAL_SHUTTER는 다음을 별도로 구현하지 않는다.
 
-- 자동 카운트다운
-- 자동 촬영 요청
-- Nikon 카메라 직접 제어
-- digiCamControl 촬영 명령 실행
-- 사진 파일 감지 방법
-- 사진 파일 저장 방법
-- 썸네일 생성
-- 촬영 완료 플래시
+* 물리 셔터 전용 상태 관리자
+* 별도의 자동 카운트다운
+* 별도의 촬영 완료 신호 처리
+* 카메라 직접 제어
+* digiCamControl 촬영 명령 실행
+* 사진 파일 감지 방법
+* 사진 파일 저장 방법
+* 썸네일 생성
+* 촬영 완료 플래시
+* 갤러리 및 COPY 처리
 
----
-
-## Start
-
-PHYSICAL_SHUTTER 모드가 시작되면
-RusticaStudio는 촬영 대기 상태가 된다.
-
-상태:
-
-WAITING_SHUTTER
-
-이 상태에서는
-자동 촬영 타이머를 실행하지 않는다.
-
-RusticaStudio가
-자동 촬영 요청을 발생시키지도 않는다.
+각 기능은 기존 담당 Feature와 Service의 책임을 유지한다.
 
 ---
 
 ## Physical Capture
 
-사용자가 Nikon 카메라의
-물리 셔터 버튼을 누른다.
+사용자가 카메라의 물리 셔터 버튼을 누른다.
 
-실제 카메라 촬영은
-Nikon 카메라와
-카메라 제어 환경에서 수행된다.
+실제 촬영은 카메라와 카메라 제어 환경에서 수행된다.
 
-PHYSICAL_SHUTTER는
-셔터 버튼 입력 자체를
-촬영 완료로 판단하지 않는다.
+RusticaStudio는 셔터 버튼 입력 자체를 촬영 완료로 판단하지 않는다.
+
+기본 흐름:
+
+물리 셔터 입력
+
+↓
+
+실제 카메라 촬영
+
+↓
+
+PC 감시 폴더에 사진 도착
+
+↓
+
+FILE_WATCH의 실제 파일 감지
+
+↓
+
+기존 촬영 완료 파이프라인
+
+↓
+
+플래시·썸네일·Session 이미지 반영
 
 ---
 
 ## Capture Boundary
 
-물리 셔터 버튼을 누른 시점과
-실제 촬영 완료 시점은
-서로 다른 사건이다.
+물리 셔터 버튼을 누른 시점과 실제 촬영 완료 시점은 서로 다른 사건이다.
 
-셔터 입력
+RusticaStudio는 실제 사진 파일이 도착하고 기존 파일 감지 절차에서 완료가 확인된 뒤에만 촬영 결과를 처리한다.
 
-↓
-
-실제 Nikon 촬영
-
-↓
-
-PC 사진 도착
-
-↓
-
-촬영 완료 확인
-
-이 흐름을 사용한다.
-
-PHYSICAL_SHUTTER는
-실제 촬영 완료 신호를 받은 뒤에만
-한 번의 촬영이 완료되었다고 판단한다.
+셔터 입력만으로 존재하지 않는 사진을 생성하거나 촬영 성공으로 표시하지 않는다.
 
 ---
 
-## Capture Completed
+## Auto Timer Relationship
 
-실제 촬영 완료가 확인되면
-PHYSICAL_SHUTTER는
-해당 촬영이 끝난 것으로 판단한다.
+현재 구현에서는 자동 촬영 타이머가 진행 중이어도 카메라의 물리 셔터를 사용할 수 있다.
 
-촬영 완료의 판단 기준과
-완료 후 UI 처리는
-PHYSICAL_SHUTTER의 책임이 아니다.
+물리 셔터로 촬영된 사진은 기존 파일 감지 파이프라인을 통해 처리된다.
 
-PHYSICAL_SHUTTER는
-촬영 완료 신호를 전달받는다.
+물리 셔터 촬영을 이유로 자동 타이머를 중단하거나 초기화하는 별도 로직을 추가하지 않는다.
 
----
+자동 타이머가 0초에 도달했을 때의 촬영 요청은 기존 AUTO_TIMER 정책을 따른다.
 
-## Continuous Capture
-
-한 번의 촬영이 완료되면
-다시 WAITING_SHUTTER 상태로 돌아간다.
-
-사용자는
-원하는 시점에 다시 촬영할 수 있다.
-
-흐름:
-
-WAITING_SHUTTER
-
-↓
-
-사용자 물리 셔터
-
-↓
-
-실제 촬영
-
-↓
-
-촬영 완료
-
-↓
-
-WAITING_SHUTTER
-
-이 과정을
-세션이 종료될 때까지 반복할 수 있다.
-
----
-
-## No Timer
-
-PHYSICAL_SHUTTER 모드에서는
-자동 촬영 카운트다운을 실행하지 않는다.
-
-따라서 다음 동작이 존재하지 않는다.
-
-- 촬영 간격 카운트다운
-- 0초 자동 촬영
-- 자동 촬영 요청
-- 자동 타이머 리셋
-
-타이머 촬영 정책은
-AUTO_TIMER의 책임이다.
-
----
-
-## No Automatic Capture Request
-
-PHYSICAL_SHUTTER 모드에서는
-RusticaStudio가
-digiCamControl에 자동 촬영 명령을 보내지 않는다.
-
-실제 촬영 시작은
-사용자의 물리 셔터 조작에 의해 발생한다.
+자동 타이머의 상태와 촬영 간격 정책은 PHYSICAL_SHUTTER가 관리하지 않는다.
 
 ---
 
 ## Completion UI Boundary
 
-PHYSICAL_SHUTTER는
-촬영 완료 UI를 직접 실행하지 않는다.
+PHYSICAL_SHUTTER는 촬영 완료 UI를 직접 실행하지 않는다.
 
-다음 기능은
-실제 촬영 완료 이후
-별도의 촬영 완료 기능에서 처리한다.
+실제 촬영 파일이 확인된 이후 다음 기능은 기존 촬영 완료 파이프라인에서 처리한다.
 
-- 플래시 애니메이션
-- 촬영 완료 애니메이션
-- 실제 사진 썸네일
+* 플래시 애니메이션
+* 촬영 완료 애니메이션
+* 실제 사진 썸네일
+* Session 이미지 반영
+
+촬영 요청의 출처에 따라 별도의 UI 처리 경로를 만들지 않는다.
+
+---
+
+## Session and Album Boundary
+
+물리 셔터로 촬영된 사진도 현재 Session의 실제 이미지로 처리한다.
+
+Session 종료 후 ALBUM이 활성화되어 있으면 기존 Gallery에서 해당 이미지를 표시한다.
+
+별표 선택과 선택 완료, COPY 폴더 생성 및 다운로드는 기존 ALBUM과 SESSION_COPY 정책을 그대로 따른다.
+
+PHYSICAL_SHUTTER는 이 기능들을 직접 구현하거나 수정하지 않는다.
 
 ---
 
 ## Failure
 
-물리 셔터를 눌렀더라도
-실제 촬영 완료가 확인되지 않았다면
+물리 셔터를 눌렀더라도 실제 촬영 파일이 확인되지 않았다면 촬영 성공으로 처리하지 않는다.
 
-RusticaStudio는
-촬영 성공으로 처리하지 않는다.
+파일 감지와 저장 실패에 대한 상세 정책은 FILE_WATCH 및 관련 저장 기능의 책임이다.
 
-PHYSICAL_SHUTTER는
-존재하지 않는 촬영 결과를
-임의로 생성하지 않는다.
+PHYSICAL_SHUTTER는 존재하지 않는 촬영 결과를 임의로 생성하지 않는다.
 
 ---
 
 ## Stop
 
-세션이 종료되거나
-PHYSICAL_SHUTTER 모드가 종료되면
+Session이 종료되면 이후 촬영 파일을 현재 활성 Session의 촬영 결과로 처리하지 않는다.
 
-PHYSICAL_SHUTTER는
-촬영 완료 대기를 종료한다.
+Session 종료 및 파일 감지의 생명주기는 기존 SESSION과 FILE_WATCH 정책을 따른다.
 
-이후 감지되는 촬영을
-현재 활성 촬영으로 처리하지 않는다.
+별도의 물리 셔터 대기 상태나 종료 상태를 새로 구현하지 않는다.
 
 ---
 
 ## State
 
-PHYSICAL_SHUTTER가 소유하는 상태는
-다음과 같다.
+현재 구현에서 PHYSICAL_SHUTTER는 독립적인 런타임 상태를 소유하지 않는다.
 
-IDLE
+기존 문서에서 계획했던 다음 상태는 현재 구현 대상으로 사용하지 않는다.
 
-WAITING_SHUTTER
+* IDLE
+* WAITING_SHUTTER
+* STOPPED
 
-STOPPED
-
-기본 상태 흐름:
-
-IDLE
-
-↓
-
-WAITING_SHUTTER
-
-↓
-
-촬영 완료
-
-↓
-
-WAITING_SHUTTER
-
-모드 종료 시:
-
-WAITING_SHUTTER
-
-↓
-
-STOPPED
+물리 셔터 전용 상태 관리가 실제로 필요해지는 경우에만 별도 설계를 검토한다.
 
 ---
 
-## Auto Timer Boundary
+## Verified Behavior
 
-PHYSICAL_SHUTTER는
-AUTO_TIMER의 상태를 관리하지 않는다.
+2026-09-07 실제 카메라 셔터 테스트에서 다음 동작을 확인했다.
 
-V2에서는
+* 촬영 타이머 10초 진행
+* 타이머 진행 중 물리 셔터 촬영 정상 작동
+* 실제 사진 파일 감지 정상 작동
+* 촬영 애니메이션 정상 작동
+* 썸네일 정상 표시
+* Gallery 이미지 정상 표시
+* 선택 및 다운로드 정상 완료
+* 타이머 0초 자동 촬영 정상 작동
 
-AUTO_TIMER
+따라서 현재 검증된 범위에서는 물리 셔터 전용 촬영 로직을 추가할 필요가 없다.
 
-와
+---
 
-PHYSICAL_SHUTTER
+## Remote Shutter Verification
 
-중 하나의 촬영 방식만 활성화한다.
+카메라 리모콘이 물리 셔터와 동일한 방식으로 촬영을 발생시키는 경우, 기존 파일 감지 파이프라인에서 처리될 가능성이 높다.
 
-PHYSICAL_SHUTTER가 활성화되어 있는 동안
-AUTO_TIMER는 자동 촬영을 발생시키지 않는다.
+다만 실제 리모콘 촬영은 아직 검증하지 않았다.
+
+리모콘의 연결 및 카메라 호환성은 별도 확인이 필요하다.
+
+리모콘 실측 시에는 실제 사진 저장, 파일 감지, 갤러리 반영을 확인한다. 별도의 소프트웨어 촬영 로직을 미리 구현하지 않는다.
 
 ---
 
 ## Future Boundary
 
-차후 HYBRID 촬영 방식에서는
+현재 동작하는 자동 타이머와 물리 셔터의 병행 촬영을 유지한다.
 
-자동 타이머 진행 중
-물리 셔터 촬영을 허용할 수 있다.
+향후 별도의 촬영 방식 선택 UI나 물리 셔터 전용 모드가 실제로 필요해질 경우, 해당 요구사항을 먼저 문서로 정의한 뒤 구현 여부를 결정한다.
 
-하지만 해당 정책은
-PHYSICAL_SHUTTER에 추가하지 않는다.
-
-HYBRID의 동작은
-독립된 HYBRID_CAPTURE 기능에서 정의한다.
-
-따라서 V3를 구현할 때
-PHYSICAL_SHUTTER의 기본 정책을
-변경하지 않는 것을 원칙으로 한다.
+검증되지 않은 가상의 충돌을 이유로 기존 촬영 파이프라인을 변경하지 않는다.
 
 ---
 
 ## Source of Truth
 
-이 문서는
-PHYSICAL_SHUTTER 촬영 정책의
-유일한 Source of Truth이다.
+이 문서는 PHYSICAL_SHUTTER 촬영 정책의 유일한 Source of Truth이다.
 
-PHYSICAL_SHUTTER의 상세 정책을
-다른 문서에 중복 작성하지 않는다.
-'@ | Set-Content `
-"C:\projects\rusticastudio\docs\capture\PHYSICAL_SHUTTER.md" `
--Encoding UTF8
+물리 셔터의 상세 정책을 다른 문서에 중복 작성하지 않는다.
+
+파일 감지, 자동 타이머, 촬영 완료, Session 저장 및 ALBUM의 상세 정책은 각각의 담당 문서를 따른다.
