@@ -358,7 +358,7 @@ export function clearAlbumView() {
     deps.albumSelectedCount.innerHTML =
         `
             <span class="album-selected-label">
-                선택한 사진
+                인화할 사진 선택
             </span>
 
             <strong class="album-selected-number">
