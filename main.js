@@ -51,10 +51,18 @@ const {
 
 const {
     initDigiCamControlProcessService,
-    startDigiCamControl
+    startDigiCamControl,
+    stopDigiCamControl
 } = require(
     "./electron/services/camera/digiCamControlProcessService"
 );
+
+const {
+    bringWindowToForeground
+} = require(
+    "./electron/services/window/foregroundWindowService"
+);
+
 
 let mainWindow;
 
@@ -172,12 +180,11 @@ initDigiCamControlProcessService({
                 return;
             }
 
-            mainWindow.show();
-
-            mainWindow.focus();
-
-            writeLog(
-                "RusticaStudio 전면 복귀 완료"
+            bringWindowToForeground(
+                mainWindow,
+                {
+                    log: writeLog
+                }
             );
         }
 });
@@ -1007,6 +1014,8 @@ app.on(
         );
 
         await stopDSLRWatcher();
+
+        stopDigiCamControl();
 
         app.quit();
     }

@@ -1,18 +1,27 @@
-@'
 # RusticaStudio System
 
 ## Purpose
 
-RusticaStudio는 Nikon 카메라를 이용한
+RusticaStudio는
+웹캠과 외부 카메라 제어 엔진을 통한
+호환 카메라를 사용할 수 있는
 무인 촬영 시스템이다.
 
 RusticaStudio는 사용자 흐름과 촬영 정책을 관리한다.
 
-실제 Nikon 카메라 제어는
-카메라 제어 엔진에 위임한다.
+카메라 제조사나 모델별 제어 방식은
+해당 카메라 연결 Service와
+외부 카메라 제어 엔진에 위임한다.
 
-현재 카메라 제어 엔진은
+현재 외부 카메라 제어 엔진은
 digiCamControl이다.
+
+digiCamControl이 지원하고
+정상적으로 인식한 카메라를
+범용적으로 사용하는 것을 목표로 한다.
+
+현재 실제 검증 장비는 Nikon Z5이며,
+제품 구조를 Nikon 전용으로 제한하지 않는다.
 
 ---
 
@@ -47,7 +56,8 @@ External
 External에는 다음과 같은 외부 시스템이 포함된다.
 
 - digiCamControl
-- Nikon Camera
+- digiCamControl 호환 카메라
+- 웹캠
 - File System
 - Electron
 
@@ -138,10 +148,11 @@ digiCamControl
 
 ↓
 
-Nikon Camera
-
+digiCamControl Compatible Camera
 
 그리고
+
+Webcam
 
 File System
 
@@ -149,11 +160,17 @@ Electron
 
 이 존재한다.
 
-RusticaStudio는 Nikon 카메라를
-직접 제어하지 않는다.
+RusticaStudio는
+카메라 제조사나 모델별 제어 방식을
+Feature 또는 UI에서 직접 구현하지 않는다.
 
-카메라 제어 방식이 변경되더라도
+카메라 연결 방식이나
+외부 제어 엔진이 변경되더라도
 Feature와 UI를 최대한 수정하지 않는 구조를 유지한다.
+
+카메라별 지원 기능과
+실제 연결 가능 여부는
+해당 카메라 연결 Service의 책임으로 분리한다.
 
 ---
 
@@ -287,6 +304,3 @@ SYSTEM.md에서는
 
 기존 기능에 조건문을 계속 추가하여
 거대한 Manager를 만드는 방식을 사용하지 않는다.
-'@ | Set-Content `
-"C:\projects\rusticastudio\docs\system\SYSTEM.md" `
--Encoding UTF8

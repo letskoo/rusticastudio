@@ -1,5 +1,4 @@
 const {
-    spawn,
     execFile
 } = require(
     "child_process"
@@ -169,7 +168,17 @@ function waitForDigiCamControlWebServer(
                         "digiCamControl WebServer 준비 완료"
                     );
 
-                    startDigiCamControlLiveView();
+                    logger(
+                        "digiCamControl 카메라 초기화 대기"
+                    );
+
+                    setTimeout(
+                        () => {
+
+                            waitForDigiCamControlCamera();
+                        },
+                        8000
+                    );
 
                     return;
                 }
@@ -223,6 +232,79 @@ function retryDigiCamControlWebServer(
             );
         },
         1000
+    );
+}
+
+
+function waitForDigiCamControlCamera(
+    retryCount = 0
+) {
+
+    logger(
+        `digiCamControl 카메라 준비 확인 (${retryCount + 1})`
+    );
+
+    execFile(
+        DIGICAM_REMOTE_CMD_PATH,
+        [
+            "/c",
+            "list",
+            "cameras"
+        ],
+        {
+            windowsHide: true,
+            timeout: 5000
+        },
+        (
+            error,
+            stdout
+        ) => {
+
+            const response =
+                String(stdout || "").trim();
+
+            logger(
+                `digiCamControl 카메라 응답: ${response}`
+            );
+
+            const cameraReady =
+                !error &&
+                response.includes(
+                    "response:[\""
+                );
+
+            if (cameraReady) {
+
+                logger(
+                    "digiCamControl 카메라 준비 완료"
+                );
+
+                startDigiCamControlLiveView();
+
+                return;
+            }
+
+            if (
+                retryCount >= 29
+            ) {
+
+                logger(
+                    "digiCamControl 카메라 준비 최종 실패"
+                );
+
+                return;
+            }
+
+            setTimeout(
+                () => {
+
+                    waitForDigiCamControlCamera(
+                        retryCount + 1
+                    );
+                },
+                1000
+            );
+        }
     );
 }
 
@@ -372,8 +454,7 @@ function startDigiCamControlLiveView(
             "LiveViewWnd_Show"
         ],
         {
-            windowsHide: true,
-            timeout: 5000
+            windowsHide: true
         },
         (
             error,
@@ -466,17 +547,33 @@ function startDigiCamControl() {
             "digiCamControl 실행 요청"
         );
 
-        const process =
-            spawn(
-                DIGICAM_CONTROL_PATH,
-                [],
-                {
-                    detached: true,
-                    stdio: "ignore"
-                }
-            );
+        execFile(
+            "powershell.exe",
+            [
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                `Start-Process -FilePath '${DIGICAM_CONTROL_PATH}'`
+            ],
+            {
+                windowsHide: true
+            },
+            error => {
 
-        process.unref();
+                if (error) {
+
+                    logger(
+                        `digiCamControl Shell 실행 실패: ${error}`
+                    );
+
+                    return;
+                }
+
+                logger(
+                    "digiCamControl Shell 실행 완료"
+                );
+            }
+        );
 
         setTimeout(
             waitForDigiCamControlWebServer,
@@ -508,9 +605,47 @@ function startDigiCamControl() {
 }
 
 
+function stopDigiCamControl() {
+
+    logger(
+        "digiCamControl 종료 요청"
+    );
+
+    execFile(
+        "powershell.exe",
+        [
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            `Get-Process CameraControl -ErrorAction SilentlyContinue | Stop-Process`
+        ],
+        {
+            windowsHide: true
+        },
+        error => {
+
+            if (error) {
+
+                logger(
+                    `digiCamControl 종료 실패: ${error}`
+                );
+
+                return;
+            }
+
+            logger(
+                "digiCamControl 종료 완료"
+            );
+        }
+    );
+}
+
+
 module.exports = {
 
     initDigiCamControlProcessService,
 
-    startDigiCamControl
+    startDigiCamControl,
+
+    stopDigiCamControl
 };
