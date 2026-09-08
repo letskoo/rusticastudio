@@ -1,6 +1,6 @@
 let deps;
-
 let previewImagePath = null;
+let showSelectedOnly = false;
 
 
 export function initAlbumView(
@@ -42,25 +42,107 @@ export function initAlbumView(
     );
 
     modal.addEventListener(
+
         "click",
+
         event => {
+
             if (event.target === modal) {
+
                 closeAlbumPreview();
+
             }
+
         }
+
     );
+
+    deps.albumFilterBtn.addEventListener(
+
+        "click",
+
+        () => {
+
+            showSelectedOnly =
+                !showSelectedOnly;
+
+            renderFilteredAlbumImages();
+
+        }
+
+    );
+
 }
+
+
+
+function renderFilteredAlbumImages() {
+
+    const imagePaths =
+        deps.getSessionImages();
+
+    const visibleImages =
+        showSelectedOnly
+            ? imagePaths.filter(
+                imagePath =>
+                    deps.isFavorite(
+                        imagePath
+                    )
+            )
+            : imagePaths;
+
+    renderAlbumImages(
+        visibleImages
+    );
+
+    updateAlbumFilterButton();
+
+}
+
+
+
+function updateAlbumFilterButton() {
+
+    deps.albumFilterBtn.classList.toggle(
+
+        "active",
+
+        showSelectedOnly
+
+    );
+
+    deps.albumFilterBtn.setAttribute(
+
+        "aria-pressed",
+
+        String(
+            showSelectedOnly
+        )
+
+    );
+
+}
+
 
 
 export function showAlbumPage() {
 
+    showSelectedOnly = false;
+
+    updateAlbumFilterButton();
+
     deps.cameraPage.classList.remove(
+
         "active"
+
     );
 
     deps.albumPage.classList.add(
+
         "active"
+
     );
+
 }
 
 
@@ -198,79 +280,150 @@ function openAlbumPreview(
 }
 
 function closeAlbumPreview() {
+
     const modal = document.getElementById(
+
         "album-preview-modal"
+
     );
 
     const image = document.getElementById(
+
         "album-preview-image"
+
     );
 
     modal.classList.remove(
+
         "active"
+
     );
 
     image.removeAttribute(
+
         "src"
+
     );
 
     previewImagePath = null;
+
+    if (showSelectedOnly) {
+
+        renderFilteredAlbumImages();
+
+    }
+
 }
 
 
 function toggleAlbumFavorite(
+
     imagePath
+
 ) {
+
     deps.onToggleFavorite(
+
         imagePath
+
     );
 
+    if (
+
+        showSelectedOnly &&
+
+        !previewImagePath
+
+    ) {
+
+        renderFilteredAlbumImages();
+
+        return;
+
+    }
+
     deps.albumGrid
+
         .querySelectorAll(
+
             ".album-image-item"
+
         )
+
         .forEach(
+
             item => {
+
                 const image =
+
                     item.querySelector(
+
                         ".album-image"
+
                     );
 
                 const button =
+
                     item.querySelector(
+
                         ".album-favorite-btn"
+
                     );
 
                 if (
+
                     image &&
+
                     button &&
+
                     image.src === toFileUrl(
+
                         imagePath
+
                     )
+
                 ) {
+
                     updateFavoriteButton(
+
                         button,
+
                         imagePath
+
                     );
+
                 }
+
             }
+
         );
 
     if (
+
         previewImagePath === imagePath
+
     ) {
+
         const previewFavoriteButton =
+
             document.getElementById(
+
                 "album-preview-favorite"
+
             );
 
         updateFavoriteButton(
+
             previewFavoriteButton,
+
             imagePath
+
         );
+
     }
 
     updateSelectedCount();
+
 }
 
 
@@ -350,9 +503,14 @@ export function updateAlbumTimer(
 
 export function clearAlbumView() {
 
+    showSelectedOnly = false;
+
+    updateAlbumFilterButton();
+
     closeAlbumPreview();
 
     deps.albumGrid.innerHTML =
+
         "";
 
     deps.albumSelectedCount.innerHTML =

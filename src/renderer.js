@@ -30,6 +30,7 @@ import {
     cancelEndBtn,
     albumPage,
     albumSelectedCount,
+    albumFilterBtn,
     albumTimer,
     albumContent,
     albumGrid,
@@ -81,6 +82,7 @@ import {
     completeAlbum,
     toggleFavorite,
     isFavorite,
+    getSessionImages,
     getSelectedImagePaths
 } from "./features/album/album.js";
 
@@ -172,6 +174,8 @@ initAlbumView({
 
     albumSelectedCount,
 
+    albumFilterBtn,
+
     albumTimer,
 
     albumGrid,
@@ -180,6 +184,8 @@ initAlbumView({
         toggleFavorite,
 
     isFavorite,
+
+    getSessionImages,
 
     getSelectedImagePaths
 

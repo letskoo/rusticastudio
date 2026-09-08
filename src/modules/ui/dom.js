@@ -169,6 +169,12 @@ export const albumSelectedCount =
     );
 
 
+export const albumFilterBtn =
+    document.getElementById(
+        "album-filter-btn"
+    );
+
+
 export const albumTimer =
     document.getElementById(
         "album-timer"
