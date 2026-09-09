@@ -21,6 +21,7 @@ import {
     captureModeSelect,
     autoLaunchInput,
     cameraSelect,
+    cameraSelectItem,
     storeNameInput,
     selectPathBtn,
     currentSavePath,
@@ -143,6 +144,8 @@ initSettingsManager({
     autoLaunchInput,
 
     cameraSelect,
+
+    cameraSelectItem,
 
     storeNameInput,
 

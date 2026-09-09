@@ -119,6 +119,11 @@ export const cameraSelect =
 
     );
 
+export const cameraSelectItem =
+    document.getElementById(
+        "camera-select-item"
+    );
+
 export const storeNameInput =
 
     document.getElementById(

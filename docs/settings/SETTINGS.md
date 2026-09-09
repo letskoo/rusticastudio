@@ -168,17 +168,52 @@ Base Save Path는 RusticaStudio가 최종 촬영 결과를 보관하는 위치�
 
 ## Camera Setting
 
-카메라 및 라이브뷰에 필요한 장치 설정을 저장할 수 있다.
+카메라 및 라이브뷰에 필요한 연결 방식과 장치 설정을 저장할 수 있다.
 
-예:
+### Capture Mode
 
-selectedCameraId
+설정값:
+
+captureMode
+
+지원하는 연결 방식:
+
+- webcam
+- digicam
+
+기본값:
+
+webcam
+
+웹캠과 digiCamControl은 서로 다른 카메라 연결 방식이다.
 
 카메라 연결 방식과 사용자의 촬영 조작 방식은 서로 다른 개념이다.
 
-digiCamControl은 호환 카메라를 제어하는 외부 엔진이며, 웹캠은 별도의 카메라 연결 방식이다.
-
 카메라 연결 방식 선택을 자동 타이머와 물리 셔터의 분기로 사용하지 않는다.
+
+### Camera Selection UI
+
+웹캠 모드에서는 카메라 선택 항목을 표시한다.
+
+digiCamControl 모드에서는 카메라 선택 항목을 숨긴다.
+
+digiCamControl은 외부 엔진에서 연결된 호환 카메라를 제어하므로, RusticaStudio 설정 화면에서 별도의 카메라 장치 선택을 요구하지 않는다.
+
+카메라 선택 항목을 숨기더라도 기존 장치 선택 DOM과 설정값은 유지한다.
+
+설정값:
+
+selectedCameraId
+
+웹캠 모드의 기존 장치 선택 및 연결 동작은 변경하지 않는다.
+
+### Responsibility Boundary
+
+SETTINGS는 연결 방식과 장치 선택 설정값을 저장하고 제공한다.
+
+실제 카메라 연결, 라이브뷰 시작, 촬영 및 재연결은 Camera Manager와 해당 Camera Service가 담당한다.
+
+SETTINGS는 카메라를 직접 제어하지 않는다.
 
 ---
 

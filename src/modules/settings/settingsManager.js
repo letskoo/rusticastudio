@@ -16,11 +16,25 @@ let appSettings = {
     storeName: "Rustica"
 };
 
+function updateCameraSelectVisibility() {
+
+    const isWebcam =
+        deps.captureModeSelect.value === "webcam";
+
+    deps.cameraSelectItem.style.display =
+        isWebcam ? "" : "none";
+}
+
 export function initSettingsManager(
     dependencies
 ) {
 
     deps = dependencies;
+
+    deps.captureModeSelect.addEventListener(
+        "change",
+        updateCameraSelectVisibility
+    );
 
     deps.storeNameInput.addEventListener(
         "input",
@@ -54,6 +68,8 @@ export async function loadSettings() {
 
     deps.captureModeSelect.value =
         appSettings.captureMode;
+
+    updateCameraSelectVisibility();
 
     deps.sessionMinInput.value =
         appSettings.sessionMinutes;
