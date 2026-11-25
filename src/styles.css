@@ -1247,3 +1247,21 @@ body {
 #album-preview-favorite:hover {
     background: rgba(0, 0, 0, 0.85);
 }
+
+/* =========================================================
+   PORTRAIT MONITOR - DSLR LIVE VIEW
+========================================================= */
+
+@media (orientation: portrait) {
+
+    #dslrLiveView {
+        width: 100vh;
+        height: 100vw;
+
+        object-fit: cover;
+
+        transform:
+            translate(-50%, -50%) rotate(-90deg);
+    }
+
+}

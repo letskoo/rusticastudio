@@ -165,14 +165,66 @@ ALBUM 이미지로 사용하지 않는다.
 ## Gallery
 
 현재 Session에서 촬영된 이미지를
+
 Gallery 형식으로 표시한다.
 
 각 이미지는
+
 Thumbnail로 표시할 수 있다.
 
 사용자는
+
 각 이미지의 별표 상태를
+
 확인할 수 있다.
+
+가로 모니터에서는
+
+기존 Desktop Gallery 구성을 유지한다.
+
+세로 모니터에서는
+
+촬영된 이미지 전체를 확인할 수 있도록
+
+세로 화면에 적합한 Gallery 구성을 사용한다.
+
+세로 모니터라고 해서
+
+Gallery의 좌우 영역을 단순히 잘라서 표시하지 않는다.
+
+화면 방향에 따라
+
+Gallery의 열 수,
+
+간격,
+
+UI 요소의 위치와 크기를
+
+조정할 수 있다.
+
+화면 방향 변경은
+
+Gallery의 표시 방식만 변경한다.
+
+sessionImages,
+
+selectedImagePaths,
+
+별표 선택 상태,
+
+선택 완료,
+
+선택시간 만료,
+
+SESSION_COPY에 전달하는 결과는
+
+변경하지 않는다.
+
+모니터 방향에 따른
+
+구체적인 Gallery 화면 구성 정책은
+
+SCREEN_ORIENTATION 문서를 따른다.
 
 ---
 
@@ -694,6 +746,12 @@ CAPTURE_COMPLETED,
 SYSTEM
 
 문서에 중복 작성하지 않는다.
+
+모니터 방향에 따른
+
+Gallery 화면 구성 및 UI 배치 정책은
+
+SCREEN_ORIENTATION 문서를 따른다.
 
 ---
 

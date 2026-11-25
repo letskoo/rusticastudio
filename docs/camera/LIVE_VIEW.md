@@ -281,16 +281,39 @@ LIVE_VIEW 화면을
 ## Aspect Ratio
 
 LIVE_VIEW는
+
 카메라 영상 비율과
+
 화면 비율을 고려하여
 
 사용자에게 자연스럽게
+
 표시할 수 있다.
 
 화면 크롭이나 확대는
+
 표현을 위한 UI 동작이다.
 
+가로 모니터에서는
+
+가로 화면에 맞는 LiveView 표시 방식을 사용한다.
+
+세로 모니터에서는
+
+세로 화면에 맞는 LiveView 표시 방식을 사용한다.
+
+카메라의 물리적인 방향을
+
+LIVE_VIEW가 감지하거나 판단하지 않는다.
+
+모니터 방향에 따른
+
+구체적인 화면 배치 및 표시 정책은
+
+SCREEN_ORIENTATION 문서를 따른다.
+
 실제 Nikon 원본의
+
 해상도나 비율을 변경하지 않는다.
 
 ---
@@ -371,6 +394,9 @@ FILE_WATCH,
 SESSION
 
 문서에 중복 작성하지 않는다.
-'@ | Set-Content `
-"C:\projects\rusticastudio\docs\camera\LIVE_VIEW.md" `
--Encoding UTF8
+
+모니터 방향에 따른
+
+화면 구성 및 UI 배치 정책은
+
+SCREEN_ORIENTATION 문서를 따른다.
